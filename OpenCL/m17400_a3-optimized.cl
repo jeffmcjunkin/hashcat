@@ -159,11 +159,15 @@ DECLSPEC void m17400m (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u32 *w
 
       u64x t;
 
-      t = bc4 ^ hc_rotl64 (bc1, 1); a00 ^= t; a10 ^= t; a20 ^= t; a30 ^= t; a40 ^= t;
-      t = bc0 ^ hc_rotl64 (bc2, 1); a01 ^= t; a11 ^= t; a21 ^= t; a31 ^= t; a41 ^= t;
-      t = bc1 ^ hc_rotl64 (bc3, 1); a02 ^= t; a12 ^= t; a22 ^= t; a32 ^= t; a42 ^= t;
-      t = bc2 ^ hc_rotl64 (bc4, 1); a03 ^= t; a13 ^= t; a23 ^= t; a33 ^= t; a43 ^= t;
-      t = bc3 ^ hc_rotl64 (bc0, 1); a04 ^= t; a14 ^= t; a24 ^= t; a34 ^= t; a44 ^= t;
+      // Fold Theta D-application as explicit 3-input XORs so ptxas emits one
+      // XOR3 (LOP3) per lane instead of materializing t = bc[x-1] ^ rotl(bc[x+1])
+      // and then 5 two-input XORs; the parity bc is live across the D-phase
+      // anyway, so register pressure is unchanged. Value-identical (XOR assoc).
+      t = hc_rotl64 (bc1, 1); a00 = a00 ^ bc4 ^ t; a10 = a10 ^ bc4 ^ t; a20 = a20 ^ bc4 ^ t; a30 = a30 ^ bc4 ^ t; a40 = a40 ^ bc4 ^ t;
+      t = hc_rotl64 (bc2, 1); a01 = a01 ^ bc0 ^ t; a11 = a11 ^ bc0 ^ t; a21 = a21 ^ bc0 ^ t; a31 = a31 ^ bc0 ^ t; a41 = a41 ^ bc0 ^ t;
+      t = hc_rotl64 (bc3, 1); a02 = a02 ^ bc1 ^ t; a12 = a12 ^ bc1 ^ t; a22 = a22 ^ bc1 ^ t; a32 = a32 ^ bc1 ^ t; a42 = a42 ^ bc1 ^ t;
+      t = hc_rotl64 (bc4, 1); a03 = a03 ^ bc2 ^ t; a13 = a13 ^ bc2 ^ t; a23 = a23 ^ bc2 ^ t; a33 = a33 ^ bc2 ^ t; a43 = a43 ^ bc2 ^ t;
+      t = hc_rotl64 (bc0, 1); a04 = a04 ^ bc3 ^ t; a14 = a14 ^ bc3 ^ t; a24 = a24 ^ bc3 ^ t; a34 = a34 ^ bc3 ^ t; a44 = a44 ^ bc3 ^ t;
 
       // Rho Pi
 
@@ -418,11 +422,15 @@ DECLSPEC void m17400s (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u32 *w
 
       u64x t;
 
-      t = bc4 ^ hc_rotl64 (bc1, 1); a00 ^= t; a10 ^= t; a20 ^= t; a30 ^= t; a40 ^= t;
-      t = bc0 ^ hc_rotl64 (bc2, 1); a01 ^= t; a11 ^= t; a21 ^= t; a31 ^= t; a41 ^= t;
-      t = bc1 ^ hc_rotl64 (bc3, 1); a02 ^= t; a12 ^= t; a22 ^= t; a32 ^= t; a42 ^= t;
-      t = bc2 ^ hc_rotl64 (bc4, 1); a03 ^= t; a13 ^= t; a23 ^= t; a33 ^= t; a43 ^= t;
-      t = bc3 ^ hc_rotl64 (bc0, 1); a04 ^= t; a14 ^= t; a24 ^= t; a34 ^= t; a44 ^= t;
+      // Fold Theta D-application as explicit 3-input XORs so ptxas emits one
+      // XOR3 (LOP3) per lane instead of materializing t = bc[x-1] ^ rotl(bc[x+1])
+      // and then 5 two-input XORs; the parity bc is live across the D-phase
+      // anyway, so register pressure is unchanged. Value-identical (XOR assoc).
+      t = hc_rotl64 (bc1, 1); a00 = a00 ^ bc4 ^ t; a10 = a10 ^ bc4 ^ t; a20 = a20 ^ bc4 ^ t; a30 = a30 ^ bc4 ^ t; a40 = a40 ^ bc4 ^ t;
+      t = hc_rotl64 (bc2, 1); a01 = a01 ^ bc0 ^ t; a11 = a11 ^ bc0 ^ t; a21 = a21 ^ bc0 ^ t; a31 = a31 ^ bc0 ^ t; a41 = a41 ^ bc0 ^ t;
+      t = hc_rotl64 (bc3, 1); a02 = a02 ^ bc1 ^ t; a12 = a12 ^ bc1 ^ t; a22 = a22 ^ bc1 ^ t; a32 = a32 ^ bc1 ^ t; a42 = a42 ^ bc1 ^ t;
+      t = hc_rotl64 (bc4, 1); a03 = a03 ^ bc2 ^ t; a13 = a13 ^ bc2 ^ t; a23 = a23 ^ bc2 ^ t; a33 = a33 ^ bc2 ^ t; a43 = a43 ^ bc2 ^ t;
+      t = hc_rotl64 (bc0, 1); a04 = a04 ^ bc3 ^ t; a14 = a14 ^ bc3 ^ t; a24 = a24 ^ bc3 ^ t; a34 = a34 ^ bc3 ^ t; a44 = a44 ^ bc3 ^ t;
 
       // Rho Pi
 
