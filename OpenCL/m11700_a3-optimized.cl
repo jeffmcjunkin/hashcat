@@ -132,6 +132,94 @@ DECLSPEC void streebog_g (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOCAL_AS
   }
 }
 
+// Identical to streebog_g, but specialized for the FINAL compression of a single-block
+// candidate: only h[0] and h[1] of the result are consumed (they form r0..r3 in the
+// COMPARE). The 12th (last) round therefore needs to produce only output words 0 and 1 of
+// the s- and k-chains instead of all 8, which the rolled round loop above cannot prune on
+// its own. Value-identical for h[0..1]; drops 2*6*8 = 96 shared s-box loads per candidate.
+DECLSPEC void streebog_g_last (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOCAL_AS u64 (*s_sbob_sl64)[256])
+{
+  u64x k[8];
+  u64x s[8];
+  u64x t[8];
+
+  for (int i = 0; i < 8; i++)
+  {
+    t[i] = h[i];
+  }
+
+  #ifdef _unroll
+  #pragma unroll
+  #endif
+  for (int i = 0; i < 8; i++)
+  {
+    k[i] = SBOG_LPSti64;
+  }
+
+  for (int i = 0; i < 8; i++)
+  {
+    s[i] = m[i];
+  }
+
+  for (int r = 0; r < 11; r++)
+  {
+    for (int i = 0; i < 8; i++)
+    {
+      t[i] = s[i] ^ k[i];
+    }
+
+    #ifdef _unroll
+    #pragma unroll
+    #endif
+    for (int i = 0; i < 8; i++)
+    {
+      s[i] = SBOG_LPSti64;
+    }
+
+    for (int i = 0; i < 8; i++)
+    {
+      t[i] = k[i] ^ sbob256_rc64[r][i];
+    }
+
+    #ifdef _unroll
+    #pragma unroll
+    #endif
+    for (int i = 0; i < 8; i++)
+    {
+      k[i] = SBOG_LPSti64;
+    }
+  }
+
+  // final round (r == 11): only output words 0 and 1 are needed downstream
+
+  for (int i = 0; i < 8; i++)
+  {
+    t[i] = s[i] ^ k[i];
+  }
+
+  u64x sf[2];
+
+  for (int i = 0; i < 2; i++)
+  {
+    sf[i] = SBOG_LPSti64;
+  }
+
+  for (int i = 0; i < 8; i++)
+  {
+    t[i] = k[i] ^ sbob256_rc64[11][i];
+  }
+
+  u64x kf[2];
+
+  for (int i = 0; i < 2; i++)
+  {
+    kf[i] = SBOG_LPSti64;
+  }
+
+  h[0] ^= sf[0] ^ kf[0] ^ m[0];
+  h[1] ^= sf[1] ^ kf[1] ^ m[1];
+}
+
 DECLSPEC void m11700m (LOCAL_AS u64 (*s_sbob_sl64)[256], PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_BASIC ())
 {
   /**
@@ -201,7 +289,7 @@ DECLSPEC void m11700m (LOCAL_AS u64 (*s_sbob_sl64)[256], PRIVATE_AS u32 *w, cons
     z[7] = hc_swap64 ((u64) (pw_len * 8));
 
     streebog_g (h, z, s_sbob_sl64);
-    streebog_g (h, m, s_sbob_sl64);
+    streebog_g_last (h, m, s_sbob_sl64);
 
     const u32x r0 = l32_from_64 (h[0]);
     const u32x r1 = h32_from_64 (h[0]);
@@ -293,7 +381,7 @@ DECLSPEC void m11700s (LOCAL_AS u64 (*s_sbob_sl64)[256], PRIVATE_AS u32 *w, cons
     z[7] = hc_swap64 ((u64) (pw_len * 8));
 
     streebog_g (h, z, s_sbob_sl64);
-    streebog_g (h, m, s_sbob_sl64);
+    streebog_g_last (h, m, s_sbob_sl64);
 
     const u32x r0 = l32_from_64 (h[0]);
     const u32x r1 = h32_from_64 (h[0]);
