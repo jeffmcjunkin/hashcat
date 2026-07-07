@@ -1,0 +1,28 @@
+LEAST-OPTIMIZED FAST (non-iterated) MODES — recoverable kernel headroom. Measured (ncu compute%) where available, else modeled eff.
+
+  mode meas_cmp% model_eff      tier  achieved_H/s  name
+ 17200         -     0.060 heuristic      5.28e+08  PKZIP (Compressed)
+ 11800         -     0.088 heuristic      1.89e+08  GOST R 34.11-2012 (Streebog) 512-bit, big-endi
+ 17600        11     0.810     exact      1.91e+09  SHA3-512
+ 10400         -     0.180 heuristic      1.57e+09  PDF 1.1 - 1.3 (Acrobat 2 - 4)
+  6100        26     0.587     exact      1.46e+09  Whirlpool
+   600        37     0.664     exact      5.17e+09  BLAKE2b-512
+ 26403         -     0.375 heuristic      5.61e+09  AES-256-ECB NOKDF (PT = $salt, key = $pass)
+ 26401         -     0.526 heuristic      7.87e+09  AES-128-ECB NOKDF (PT = $salt, key = $pass)
+  9700        62     0.280     exact      1.05e+09  MS Office <= 2003 $0/$1, MD5 + RC4
+  9800        67     0.421     exact      1.18e+09  MS Office <= 2003 $3/$4, SHA1 + RC4
+ 18200        69     0.435     exact      1.38e+09  Kerberos 5, etype 23, AS-REP
+ 13100        69     0.437     exact      1.38e+09  Kerberos 5, etype 23, TGS-REP
+ 22921         -     0.692 heuristic      6.07e+09  RSA/DSA/EC/OpenSSH Private Keys ($6$)
+  7500        70     0.449     exact      1.42e+09  Kerberos 5, etype 23, AS-REQ Pre-Auth
+  1700        79     0.795     exact      2.93e+09  SHA2-512
+ 10800        79     0.784     exact      2.89e+09  SHA2-384
+ 17400         -     0.809 heuristic      1.91e+09  SHA3-256
+ 31100         -     0.834 heuristic      7.31e+09  ShangMi 3 (SM3)
+  5400        88     0.444     exact      1.19e+09  IKE-PSK SHA1
+  8300         -     0.903 heuristic      7.91e+09  DNSSEC (NSEC3)
+ 16100        92     5.388     exact      4.20e+10  TACACS+
+   900        93     1.927     exact      1.20e+11  MD4
+  1000        93     1.927     exact      1.20e+11  NTLM
+  5500        93     4.583     exact      4.51e+10  NetNTLMv1 / NetNTLMv1+ESS
+    10        93     2.084     exact      6.50e+10  md5($pass.$salt)

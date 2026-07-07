@@ -1,0 +1,37 @@
+TOP 10 LEAST-OPTIMIZED HASH TYPES — RTX 3090 @1710MHz (locked). 2026-07-02.
+Basis: integer-ops/hash vs theoretical minimum. MEASURED = ncu-profiled (high confidence);
+HEURISTIC = modeled from primitive-cost table + parsed composition (verify before trusting).
+Excludes slow/iterated KDF modes (bcrypt/argon2/PBKDF2/etc.) — their _loop kernels measured
+~98% ALU, so they are iteration-bound BY DESIGN, not kernel-inefficient (not recoverable).
+
+RANK  MODE   CONF       COMPUTE%/eff   BOTTLENECK                         name
+ 1    17600  MEASURED   11% compute    register spill, IPC 0.13, 255 reg  SHA3-512 (Keccak)
+ 2    11800  heuristic  eff 0.09       wide 64-bit table hash             Streebog-512
+ 3     6100  MEASURED   26% compute    tables+registers, IPC 0.65,255 reg Whirlpool
+ 4    10400  heuristic  eff 0.18       RC4 (PDF)                          PDF 1.1-1.3 (Acrobat 2-4)
+ 5      600  MEASURED   37% compute    64-bit ARX register pressure,16%occ BLAKE2b-512
+ 6     9700  MEASURED   62% compute    RC4 S-box latency, IPC 1.33        MS Office <=2003 MD5+RC4
+ 7     9800  MEASURED   67% compute    RC4 S-box latency, IPC 1.34        MS Office <=2003 SHA1+RC4
+ 8    13100  MEASURED   69% compute    RC4 S-box latency, IPC 1.48        Kerberos etype23 TGS-REP (Kerberoasting)
+ 8    18200  MEASURED   69% compute    RC4 S-box latency, IPC 1.48        Kerberos etype23 AS-REP (AS-REP roasting)
+ 8     7500  MEASURED   70% compute    RC4 S-box latency, IPC 1.50        Kerberos etype23 AS-REQ Pre-Auth
+ 9     1700  MEASURED   79% compute    register pressure 251reg,16%occ    SHA2-512
+ 9    10800  MEASURED   79% compute    register pressure 251reg,16%occ    SHA2-384
+10    17200  heuristic  eff 0.06       CRC/RC4-ish                        PKZIP (needs verification)
+
+Two shared root causes of recoverable headroom:
+  (A) 64-bit-word / large-state hashes (SHA3/Keccak, Whirlpool, BLAKE2b, SHA512/384, Streebog):
+      state doesn't fit in registers -> 236-255 reg -> occupancy collapses to ~16% -> latency
+      stalls (low IPC). Lever: cut register pressure / spills, raise occupancy.
+  (B) RC4-based modes (Kerberos etype23 roasting, old Office, PDF): data-dependent 256-byte
+      S-box swaps -> latency-bound (~69% compute, IPC ~1.5, 21% occ), neither pipe saturated.
+      Lever: S-box placement, ILP, invariant-HMAC precompute.
+
+For contrast, the ENTIRE 32-bit MD/SHA1/SHA2-256/NTLM family measures 92-98% ALU AND is
+instruction-efficient (measured ops/hash at or below full-hash minimum via early-reject) =
+at the roofline, no recoverable headroom. NTLM validated at ~73 int ops/candidate vs ~80 floor.
+
+SUBAGENT TARGETS (7 agents, deduped by shared kernel/primitive):
+  1 SHA3-512/Keccak 17600 | 2 Whirlpool 6100 | 3 BLAKE2b 600 | 4 SHA512/384 1700+10800
+  5 RC4 family: Kerberos 13100+18200+7500 (+Office 9700/9800 share lever)
+  6 MSCacheV2/DCC2 2100 (PBKDF2-HMAC-SHA1 loop, named) | 7 AES TGS-REP 19600+19700 (named)

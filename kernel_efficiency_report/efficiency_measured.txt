@@ -1,0 +1,45 @@
+MEASURED TIER — ncu-profiled modes, RTX 3090 @1710MHz locked. Ranked by ALU/compute saturation (ascending = most recoverable pipe headroom).
+meas_ops/hash = ALU_pipe_frac * 8.97e12 / achieved_H/s (occupancy-independent instruction efficiency estimate).
+ratio = meas_ops / theoretical_min_ops.  ratio<1 => early-reject shortcuts; ~1 => full hash; >1 => op overhead vs my model (or model underestimate).
+
+  mode  cmp%  ALU%  occ%  ipc  achieved_H/s  meas_ops  theo_ops  ratio  kern  name
+ 17600    11     ?    16 0.13      1.91e+09       513      3800   0.13    _s  SHA3-512
+  6100    26     ?    17 0.65      1.46e+09      1581      3600   0.44    _s  Whirlpool
+   600    37    37    16 0.88      5.17e+09       647      1152   0.56    _s  BLAKE2b-512
+  9700    62    42    17 1.33      1.05e+09      3619      2400   1.51    _s  MS Office <= 2003 $0/$1, MD5 + RC4
+  9800    67    41    16 1.34      1.18e+09      3099      3216   0.96    _s  MS Office <= 2003 $3/$4, SHA1 + RC4
+ 18200    69    48    21 1.48      1.38e+09      3148      2832   1.11    _s  Kerberos 5, etype 23, AS-REP
+ 13100    69    48    21 1.48      1.38e+09      3140      2832   1.11    _s  Kerberos 5, etype 23, TGS-REP
+  7500    70    49    21 1.50      1.42e+09      3114      2832   1.10    _s  Kerberos 5, etype 23, AS-REQ Pre-Auth
+  1700    79    79    16 1.70      2.93e+09      2408      2432   0.99    _s  SHA2-512
+ 10800    79    79    16 1.75      2.89e+09      2461      2432   1.01    _s  SHA2-384
+  5400    88    88    16 2.11      1.19e+09      6691      3360   1.99    _s  IKE-PSK SHA1
+ 16100    92    92    49 2.30      4.20e+10       196      1152   0.17    _s  TACACS+
+   900    93    93    65 2.26      1.20e+11        69       144   0.48    _s  MD4
+  1000    93    93    49 2.33      1.20e+11        70       144   0.48    _s  NTLM
+  5500    93    93    49 2.33      4.51e+10       185       912   0.20    _s  NetNTLMv1 / NetNTLMv1+ESS
+    10    93    93    49 2.34      6.50e+10       129       288   0.45    _s  md5($pass.$salt)
+  5100    94    94    81 2.24      4.19e+10       201       288   0.70    _s  Half MD5
+     0    94    94    65 2.19      6.55e+10       129       288   0.45    _s  MD5
+  1450    94    94    17 2.13      1.80e+09      4695      4096   1.15    _s  HMAC-SHA256 (key = $pass)
+  1100    95    95    49 2.31      3.18e+10       267       288   0.93    _s  Domain Cached Credentials (DCC), MS Cach
+    20    96    96    33 2.24      3.34e+10       258       288   0.90    _s  md5($salt.$pass)
+  6000    97    97    65 2.06      1.40e+10       619      1050   0.59    _s  RIPEMD-160
+   110    97    97    33 2.35      2.30e+10       378       560   0.68    _s  sha1($pass.$salt)
+   100    97    97    49 2.27      2.35e+10       370       560   0.66    _s  SHA1
+  5300    97    97    49 2.11      2.73e+09      3197      1728   1.85    _s  IKE-PSK MD5
+  5600    98    98    49 2.11      4.66e+09      1878      1296   1.45    _s  NetNTLMv2
+  3000    98    98    16 2.02      6.08e+10       144       256   0.56    _s  LM
+  1400    98    98    65 2.20      8.64e+09      1019      1024   1.00    _s  SHA2-256
+    50    98    98    49 2.09      1.06e+10       832      1152   0.72    _s  HMAC-MD5 (key = $pass)
+ 19600    98    98    49 2.16      2.14e+06   4125531   9175640   0.45 _loop  Kerberos 5, etype 17, TGS-REP
+  1300    98    98    49 2.20      8.46e+09      1042      1024   1.02    _s  SHA2-224
+  2100    99    99    49 2.17      8.72e+05  10154421  22937744   0.44 _loop  Domain Cached Credentials 2 (DCC2), MS C
+   140    99    99    33 2.33      1.59e+10       558       560   1.00    _s  sha1($salt.utf16le($pass))
+ 15300    99    99    49 2.16      1.84e+05  48082902  22937600   2.10 _loop  DPAPI masterkey file v1 (context 1 and 2
+  9400    99    99    66 2.18      3.54e+05  25031524 112000000   0.22 _loop  MS Office 2007
+  9500    99    99    66 2.18      1.77e+05  50067430 224000000   0.22 _loop  MS Office 2010
+  9600    99    99    66 2.06      2.69e+04 329388203 972800000   0.34 _loop  MS Office 2013
+ 19700    99    99    49 2.17      1.07e+06   8264610   9175640   0.90 _loop  Kerberos 5, etype 18, TGS-REP
+ 15900    99    99    33 2.07      1.04e+05  85732999  77824000   1.10 _loop  DPAPI masterkey file v2 (context 1 and 2
+ 11700   100    73    17 2.27      1.89e+08     34915      4200   8.31    _s  GOST R 34.11-2012 (Streebog) 256-bit, bi

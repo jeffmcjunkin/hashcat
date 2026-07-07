@@ -1,0 +1,596 @@
+ALL MODES — theoretical-min integer-ops/hash & roofline efficiency. RTX 3090 @1710MHz (PEAK_INT=8.97e12).
+eff = achieved_H/s / roofline_H/s; roofline = PEAK_INT/theo_ops. eff>=1 optimal (early-reject); eff<<1 headroom.
+tier=exact: hand-derived composition; tier=heuristic: name-parsed primitive+iters (APPROXIMATE, esp. iterated).
+SLOW modes are iteration-bound BY DESIGN (KDF rounds = security param); their _loop kernels measured ~98% ALU, so eff here is NOT recoverable headroom.
+
+  mode  slow      tier       prim  theo_ops/hash  achieved_H/s  roofline_H/s     eff  name
+ 22100     Y heuristic     sha256           1024     3.932e+03     8.764e+09   0.000  BitLocker
+ 34100     Y heuristic     sha256         262144     2.200e+01     3.423e+07   0.000  LUKS v2 argon2 + SHA-256 + AES
+ 29421     Y heuristic     sha512           2432     2.484e+03     3.690e+09   0.000  VeraCrypt SHA512 + XTS 512 bit
+ 23800     Y heuristic     sha256           1024     2.105e+04     8.764e+09   0.000  RAR3-p (Compressed)
+ 29511     Y heuristic       sha1            560     5.877e+04     1.603e+10   0.000  LUKS v1 SHA-1 + AES
+  6800     Y heuristic     sha256           1024     3.610e+04     8.764e+09   0.000  LastPass + LastPass sniffed
+ 23400     Y heuristic     sha256           1024     3.612e+04     8.764e+09   0.000  Bitwarden
+ 12200     Y heuristic     sha256           1024     4.131e+04     8.764e+09   0.000  eCryptfs
+ 13000     Y heuristic     sha256           1024     1.092e+05     8.764e+09   0.000  RAR5
+ 13400     Y heuristic     sha256           1024     1.282e+05     8.764e+09   0.000  KeePass (KDBX v2/v3)
+ 12500     Y heuristic     sha256           1024     1.368e+05     8.764e+09   0.000  RAR3-hp
+ 18300     Y heuristic     sha256           1024     1.792e+05     8.764e+09   0.000  Apple File System (APFS)
+ 16700     Y heuristic     sha256           1024     1.805e+05     8.764e+09   0.000  FileVault 2
+ 10700     Y heuristic     sha256           1024     1.973e+05     8.764e+09   0.000  PDF 1.7 Level 8 (Acrobat 10 - 11)
+ 12300     Y heuristic     sha256           1024     3.256e+05     8.764e+09   0.000  Oracle T: Type (Oracle 12+)
+ 28100     Y heuristic     sha256           1024     3.564e+05     8.764e+09   0.000  Windows Hello PIN/Password
+ 26100     Y heuristic     sha256           1024     3.609e+05     8.764e+09   0.000  Mozilla key4.db
+ 35100     Y heuristic     sha256           1024     8.042e+05     8.764e+09   0.000  sm3crypt $sm3$, SM3 (Unix)
+  7400     Y heuristic     sha256           1024     8.422e+05     8.764e+09   0.000  sha256crypt $5$, SHA256 (Unix)
+ 25500     Y heuristic     sha256           1024     8.774e+05     8.764e+09   0.000  Stargazer Stellar Wallet XLM
+  1800     Y heuristic     sha512           2432     4.393e+05     3.690e+09   0.000  sha512crypt $6$, SHA512 (Unix)
+ 11600     Y heuristic     sha256           1024     1.045e+06     8.764e+09   0.000  7-Zip
+ 29341     Y heuristic  ripemd160           1050     1.407e+06     8.547e+09   0.000  TrueCrypt RIPEMD160 + XTS 512 bit + boot-mode
+ 15700     Y heuristic     sha256      268435456     1.300e+01     3.343e+04   0.000  Ethereum Wallet, SCRYPT
+ 23100     Y heuristic     sha256           1024     4.394e+06     8.764e+09   0.001  Apple Keychain
+ 17030     Y heuristic     sha256           1024     5.659e+06     8.764e+09   0.001  GPG (AES-128/AES-256 (SHA-256($pass)))
+ 17010     Y heuristic       sha1            560     1.144e+07     1.603e+10   0.001  GPG (AES-128/AES-256 (SHA-1($pass)))
+  1600     Y heuristic        md5            288     2.877e+07     3.116e+10   0.001  Apache $apr1$ MD5, md5apr1, MD5 (APR)
+   500     Y heuristic        md5            288     2.879e+07     3.116e+10   0.001  md5crypt, MD5 (Unix), Cisco-IOS $1$ (MD5)
+ 13600     Y heuristic     sha256           1024     8.537e+06     8.764e+09   0.001  WinZip
+   400     Y heuristic     sha256           1024     2.002e+07     8.764e+09   0.002  phpass
+  8900     Y heuristic     sha256       16777216     3.607e+03     5.349e+05   0.007  scrypt
+ 10510     Y heuristic     sha256           1024     7.048e+07     8.764e+09   0.008  PDF 1.3 - 1.6 (Acrobat 4 - 8) w/ RC4-40
+ 10500     Y heuristic     sha256           1024     7.544e+07     8.764e+09   0.009  PDF 1.4 - 1.6 (Acrobat 5 - 8)
+ 34000     Y heuristic     sha256       67108864     1.451e+03     1.337e+05   0.011  Argon2
+  3200     Y heuristic     sha256        4194304     9.708e+04     2.140e+06   0.045  bcrypt $2*$, Blowfish (Unix)
+ 17200     . heuristic     sha256           1024     5.284e+08     8.764e+09   0.060  PKZIP (Compressed)
+ 11800     . heuristic   gost2012           4200     1.886e+08     2.137e+09   0.088  GOST R 34.11-2012 (Streebog) 512-bit, big-endian
+ 11700     .     exact   gost2012           4200     1.887e+08     2.137e+09   0.088  GOST R 34.11-2012 (Streebog) 256-bit, big-endian
+ 10400     . heuristic     sha256           1024     1.574e+09     8.764e+09   0.180  PDF 1.1 - 1.3 (Acrobat 2 - 4)
+  9700     .     exact        md5           2400     1.049e+09     3.739e+09   0.280  MS Office <= 2003 $0/$1, MD5 + RC4
+  7100     Y heuristic     sha512        2490368     1.291e+06     3.604e+06   0.358  macOS v10.8+ (PBKDF2-SHA512)
+ 26403     . heuristic    aes_enc            600     5.605e+09     1.496e+10   0.375  AES-256-ECB NOKDF (PT = $salt, key = $pass)
+  9800     .     exact       sha1           3216     1.176e+09     2.790e+09   0.421  MS Office <= 2003 $3/$4, SHA1 + RC4
+ 18200     .     exact        md4           2832     1.380e+09     3.169e+09   0.435  Kerberos 5, etype 23, AS-REP
+ 13100     .     exact        md4           2832     1.383e+09     3.169e+09   0.437  Kerberos 5, etype 23, TGS-REP
+  5400     .     exact       sha1           3360     1.186e+09     2.671e+09   0.444  IKE-PSK SHA1
+  7500     .     exact        md4           2832     1.424e+09     3.169e+09   0.449  Kerberos 5, etype 23, AS-REQ Pre-Auth
+ 15300     Y     exact       sha1       22937600     1.844e+05     3.912e+05   0.471  DPAPI masterkey file v1 (context 1 and 2)
+ 26401     . heuristic    aes_enc            600     7.866e+09     1.496e+10   0.526  AES-128-ECB NOKDF (PT = $salt, key = $pass)
+  5300     .     exact        md5           1728     2.731e+09     5.193e+09   0.526  IKE-PSK MD5
+  6100     .     exact  whirlpool           3600     1.464e+09     2.493e+09   0.587  Whirlpool
+   600     .     exact    blake2b           1152     5.173e+09     7.790e+09   0.664  BLAKE2b-512
+  5600     .     exact        md4           1296     4.664e+09     6.924e+09   0.674  NetNTLMv2
+ 22921     . heuristic     sha256           1024     6.068e+09     8.764e+09   0.692  RSA/DSA/EC/OpenSSH Private Keys ($6$)
+ 10800     .     exact     sha384           2432     2.892e+09     3.690e+09   0.784  SHA2-384
+  1700     .     exact     sha512           2432     2.933e+09     3.690e+09   0.795  SHA2-512
+ 17400     . heuristic     keccak           3800     1.910e+09     2.362e+09   0.809  SHA3-256
+ 17600     .     exact     keccak           3800     1.914e+09     2.362e+09   0.810  SHA3-512
+  1450     .     exact     sha256           4096     1.803e+09     2.191e+09   0.823  HMAC-SHA256 (key = $pass)
+ 31100     . heuristic     sha256           1024     7.311e+09     8.764e+09   0.834  ShangMi 3 (SM3)
+ 15900     Y     exact     sha512       77824000     1.036e+05     1.153e+05   0.899  DPAPI masterkey file v2 (context 1 and 2)
+  8300     . heuristic     sha256           1024     7.912e+09     8.764e+09   0.903  DNSSEC (NSEC3)
+ 10600     . heuristic     sha256           1024     8.375e+09     8.764e+09   0.956  PDF 1.7 Level 3 (Acrobat 9)
+  5700     . heuristic     sha256           1024     8.389e+09     8.764e+09   0.957  Cisco-IOS type 4 (SHA256)
+  1300     .     exact     sha224           1024     8.462e+09     8.764e+09   0.966  SHA2-224
+ 14100     . heuristic     sha256           1024     8.515e+09     8.764e+09   0.972  3DES (PT = $salt, key = $pass)
+  1400     .     exact     sha256           1024     8.636e+09     8.764e+09   0.985  SHA2-256
+   140     .     exact       sha1            560     1.586e+10     1.603e+10   0.990  sha1($salt.utf16le($pass))
+  1100     .     exact        md4            288     3.178e+10     3.116e+10   1.020  Domain Cached Credentials (DCC), MS Cache
+    20     .     exact        md5            288     3.341e+10     3.116e+10   1.072  md5($salt.$pass)
+ 19700     Y     exact       sha1        9175640     1.074e+06     9.780e+05   1.098  Kerberos 5, etype 18, TGS-REP
+   300     . heuristic     sha256           1024     9.699e+09     8.764e+09   1.107  MySQL4.1/MySQL5
+  5100     .     exact        md5            288     4.189e+10     3.116e+10   1.344  Half MD5
+    50     .     exact        md5           1152     1.059e+10     7.790e+09   1.360  HMAC-MD5 (key = $pass)
+   110     .     exact       sha1            560     2.298e+10     1.603e+10   1.434  sha1($pass.$salt)
+   100     .     exact       sha1            560     2.347e+10     1.603e+10   1.465  SHA1
+  6000     .     exact  ripemd160           1050     1.401e+10     8.547e+09   1.639  RIPEMD-160
+ 31000     . heuristic    blake2b           1152     1.288e+10     7.790e+09   1.653  BLAKE2s-256
+  3000     .     exact        des            256     6.081e+10     3.506e+10   1.735  LM
+ 17220     . heuristic     sha256           1024     1.542e+10     8.764e+09   1.759  PKZIP (Compressed Multi-File)
+ 11500     . heuristic     sha256           1024     1.675e+10     8.764e+09   1.911  CRC32
+  1000     .     exact        md4            144     1.201e+11     6.232e+10   1.927  NTLM
+   900     .     exact        md4            144     1.201e+11     6.232e+10   1.927  MD4
+ 18100     . heuristic       sha1           4480     3.912e+09     2.003e+09   1.953  TOTP (HMAC-SHA1)
+    10     .     exact        md5            288     6.495e+10     3.116e+10   2.084  md5($pass.$salt)
+     0     .     exact        md5            288     6.551e+10     3.116e+10   2.102  MD5
+ 19600     Y     exact       sha1        9175640     2.136e+06     9.780e+05   2.184  Kerberos 5, etype 17, TGS-REP
+  2100     Y     exact        md4       22937744     8.723e+05     3.912e+05   2.230  Domain Cached Credentials 2 (DCC2), MS Cache 2
+  9600     Y     exact     sha512      972800000     2.694e+04     9.225e+03   2.921  MS Office 2013
+ 15600     Y heuristic     sha256        8388608     3.481e+06     1.070e+06   3.254  Ethereum Wallet, PBKDF2-HMAC-SHA256
+ 33700     Y heuristic     sha256       81920000     3.578e+05     1.095e+05   3.266  Microsoft Online Account (PBKDF2-HMAC-SHA256 + AES256)
+  9500     Y     exact       sha1      224000000     1.771e+05     4.006e+04   4.420  MS Office 2010
+  9400     Y     exact       sha1      112000000     3.542e+05     8.013e+04   4.421  MS Office 2007
+  5500     .     exact        md4            912     4.510e+10     9.840e+09   4.583  NetNTLMv1 / NetNTLMv1+ESS
+ 16100     .     exact        md5           1152     4.197e+10     7.790e+09   5.388  TACACS+
+ 14000     . heuristic     sha256           1024     5.884e+10     8.764e+09   6.714  DES (PT = $salt, key = $pass)
+  9300     Y heuristic     sha256     1023998976     1.279e+05     8.764e+03  14.590  Cisco-IOS $9$ (scrypt)
+  9200     Y heuristic     sha256     1023998976     1.790e+05     8.764e+03  20.431  Cisco-IOS $8$ (PBKDF2-SHA256)
+ 20500     . heuristic     sha256           1024     2.057e+11     8.764e+09  23.477  PKZIP Master Key
+ 22000     Y heuristic     sha256      200008704     1.082e+06     4.487e+04  24.110  WPA-PBKDF2-PMKID+EAPOL
+ 18700     . heuristic     sha256           1024     5.958e+11     8.764e+09  67.986  Java Object hashCode()
+ 16300     Y heuristic     sha256      509591552     1.770e+06     1.761e+04 100.524  Ethereum Pre-Sale Wallet, PBKDF2-HMAC-SHA256
+  1500     . heuristic        des        1048576     2.372e+09     8.558e+06 277.176  descrypt, DES (Unix), Traditional DES
+    11     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Joomla < 2.5.18
+    12     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PostgreSQL
+    21     . heuristic     sha256           1024           n/a     8.764e+09     n/a  osCommerce, xt:Commerce
+    22     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Juniper NetScreen/SSG (ScreenOS)
+    23     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Skype
+    24     . heuristic     sha256           1024           n/a     8.764e+09     n/a  SolarWinds Serv-U
+    30     . heuristic        md5            288           n/a     3.116e+10     n/a  md5(utf16le($pass).$salt)
+    40     . heuristic        md5            288           n/a     3.116e+10     n/a  md5($salt.utf16le($pass))
+    60     . heuristic        md5           2304           n/a     3.895e+09     n/a  HMAC-MD5 (key = $salt)
+    70     . heuristic        md5            288           n/a     3.116e+10     n/a  md5(utf16le($pass))
+   101     . heuristic       sha1            560           n/a     1.603e+10     n/a  nsldap, SHA-1(Base64), Netscape LDAP SHA
+   111     . heuristic       sha1            560           n/a     1.603e+10     n/a  nsldaps, SSHA-1(Base64), Netscape LDAP SSHA
+   112     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Oracle S: Type (Oracle 11+)
+   120     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1($salt.$pass)
+   121     . heuristic     sha256           1024           n/a     8.764e+09     n/a  SMF (Simple Machines Forum) > v1.1
+   122     . heuristic     sha256           1024           n/a     8.764e+09     n/a  macOS v10.4, macOS v10.5, macOS v10.6
+   124     . heuristic       sha1            560           n/a     1.603e+10     n/a  Django (SHA-1)
+   125     . heuristic     sha256           1024           n/a     8.764e+09     n/a  ArubaOS
+   130     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(utf16le($pass).$salt)
+   131     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MSSQL (2000)
+   132     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MSSQL (2005)
+   133     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PeopleSoft
+   141     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Episerver 6.x < .NET 4
+   150     . heuristic       sha1           4480           n/a     2.003e+09     n/a  HMAC-SHA1 (key = $pass)
+   160     . heuristic       sha1           4480           n/a     2.003e+09     n/a  HMAC-SHA1 (key = $salt)
+   170     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(utf16le($pass))
+   200     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MySQL323
+   501     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Juniper IVE
+   610     . heuristic    blake2b           1152           n/a     7.790e+09     n/a  BLAKE2b-512($pass.$salt)
+   620     . heuristic    blake2b           1152           n/a     7.790e+09     n/a  BLAKE2b-512($salt.$pass)
+  1310     . heuristic     sha224           1024           n/a     8.764e+09     n/a  sha224($pass.$salt)
+  1320     . heuristic     sha224           1024           n/a     8.764e+09     n/a  sha224($salt.$pass)
+  1410     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256($pass.$salt)
+  1411     . heuristic     sha256           1024           n/a     8.764e+09     n/a  SSHA-256(Base64), LDAP {SSHA256}
+  1420     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256($salt.$pass)
+  1421     . heuristic     sha256           1024           n/a     8.764e+09     n/a  hMailServer
+  1430     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256(utf16le($pass).$salt)
+  1440     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256($salt.utf16le($pass))
+  1441     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Episerver 6.x >= .NET 4
+  1460     . heuristic     sha256           8192           n/a     1.095e+09     n/a  HMAC-SHA256 (key = $salt)
+  1470     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256(utf16le($pass))
+  1710     . heuristic     sha512           2432           n/a     3.690e+09     n/a  sha512($pass.$salt)
+  1711     . heuristic     sha512           2432           n/a     3.690e+09     n/a  SSHA-512(Base64), LDAP {SSHA512}
+  1720     . heuristic     sha512           2432           n/a     3.690e+09     n/a  sha512($salt.$pass)
+  1722     . heuristic     sha256           1024           n/a     8.764e+09     n/a  macOS v10.7
+  1730     . heuristic     sha512           2432           n/a     3.690e+09     n/a  sha512(utf16le($pass).$salt)
+  1731     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MSSQL (2012, 2014)
+  1740     . heuristic     sha512           2432           n/a     3.690e+09     n/a  sha512($salt.utf16le($pass))
+  1750     . heuristic     sha512          19456           n/a     4.612e+08     n/a  HMAC-SHA512 (key = $pass)
+  1760     . heuristic     sha512          19456           n/a     4.612e+08     n/a  HMAC-SHA512 (key = $salt)
+  1770     . heuristic     sha512           2432           n/a     3.690e+09     n/a  sha512(utf16le($pass))
+  2000     . heuristic     sha256           1024           n/a     8.764e+09     n/a  STDOUT
+  2400     . heuristic        md5            288           n/a     3.116e+10     n/a  Cisco-PIX MD5
+  2410     . heuristic        md5            288           n/a     3.116e+10     n/a  Cisco-ASA MD5
+  2500     Y heuristic     sha256     1023998976           n/a     8.764e+03     n/a  WPA-EAPOL-PBKDF2
+  2501     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  WPA-EAPOL-PMK
+  2600     .     exact        md5            576           n/a     1.558e+10     n/a  md5(md5($pass))
+  2611     . heuristic     sha256           1024           n/a     8.764e+09     n/a  vBulletin < v3.8.5
+  2612     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PHPS
+  2630     . heuristic        md5            288           n/a     3.116e+10     n/a  md5(md5($pass.$salt))
+  2711     . heuristic     sha256           1024           n/a     8.764e+09     n/a  vBulletin >= v3.8.5
+  2811     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MyBB 1.2+, IPB2+ (Invision Power Board)
+  3100     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Oracle H: Type (Oracle 7+)
+  3500     . heuristic        md5            288           n/a     3.116e+10     n/a  md5(md5(md5($pass)))
+  3610     . heuristic        md5            288           n/a     3.116e+10     n/a  md5(md5(md5($pass)).$salt)
+  3710     . heuristic        md5            288           n/a     3.116e+10     n/a  md5($salt.md5($pass))
+  3711     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MediaWiki B type
+  3730     . heuristic        md5            288           n/a     3.116e+10     n/a  md5($salt1.strtoupper(md5($salt2.$pass)))
+  3800     . heuristic        md5            288           n/a     3.116e+10     n/a  md5($salt.$pass.$salt)
+  3910     . heuristic        md5            288           n/a     3.116e+10     n/a  md5(md5($pass).md5($salt))
+  4010     . heuristic        md5            288           n/a     3.116e+10     n/a  md5($salt.md5($salt.$pass))
+  4110     . heuristic        md5            288           n/a     3.116e+10     n/a  md5($salt.md5($pass.$salt))
+  4300     .     exact        md5            576           n/a     1.558e+10     n/a  md5(strtoupper(md5($pass)))
+  4400     . heuristic       sha1            560           n/a     1.603e+10     n/a  md5(sha1($pass))
+  4410     . heuristic       sha1            560           n/a     1.603e+10     n/a  md5(sha1($pass).$salt)
+  4420     . heuristic       sha1            560           n/a     1.603e+10     n/a  md5(sha1($pass.$salt))
+  4430     . heuristic       sha1            560           n/a     1.603e+10     n/a  md5(sha1($salt.$pass))
+  4500     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(sha1($pass))
+  4510     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(sha1($pass).$salt)
+  4520     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1($salt.sha1($pass))
+  4521     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Redmine
+  4522     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PunBB
+  4700     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(md5($pass))
+  4710     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(md5($pass).$salt)
+  4711     . heuristic       sha1            560           n/a     1.603e+10     n/a  Huawei sha1(md5($pass).$salt)
+  4800     . heuristic        md5            288           n/a     3.116e+10     n/a  iSCSI CHAP authentication, MD5(CHAP)
+  4900     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1($salt.$pass.$salt)
+  5000     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(sha1($salt.$pass.$salt))
+  5200     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Password Safe v3
+  5720     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Cisco-ISE Hashed Password (SHA256)
+  5800     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Samsung Android Password/PIN
+  6050     . heuristic  ripemd160           8400           n/a     1.068e+09     n/a  HMAC-RIPEMD160 (key = $pass)
+  6060     . heuristic  ripemd160           8400           n/a     1.068e+09     n/a  HMAC-RIPEMD160 (key = $salt)
+  6211     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 512 bit (legacy)
+  6212     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 1024 bit (legacy)
+  6213     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 1536 bit (legacy)
+  6221     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  TrueCrypt SHA512 + XTS 512 bit (legacy)
+  6222     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  TrueCrypt SHA512 + XTS 1024 bit (legacy)
+  6223     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  TrueCrypt SHA512 + XTS 1536 bit (legacy)
+  6231     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  TrueCrypt Whirlpool + XTS 512 bit (legacy)
+  6232     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  TrueCrypt Whirlpool + XTS 1024 bit (legacy)
+  6233     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  TrueCrypt Whirlpool + XTS 1536 bit (legacy)
+  6241     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 512 bit + boot-mode (legacy)
+  6242     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 1024 bit + boot-mode (legacy)
+  6243     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 1536 bit + boot-mode (legacy)
+  6300     Y heuristic        md5            288           n/a     3.116e+10     n/a  AIX {smd5}
+  6400     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  AIX {ssha256}
+  6500     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  AIX {ssha512}
+  6600     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  1Password, agilekeychain
+  6700     Y heuristic       sha1            560           n/a     1.603e+10     n/a  AIX {ssha1}
+  6900     . heuristic     sha256           1024           n/a     8.764e+09     n/a  GOST R 34.11-94
+  7000     . heuristic     sha256           1024           n/a     8.764e+09     n/a  FortiGate (FortiOS)
+  7200     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  GRUB 2
+  7300     . heuristic       sha1           4480           n/a     2.003e+09     n/a  IPMI2 RAKP HMAC-SHA1
+  7350     . heuristic        md5           2304           n/a     3.895e+09     n/a  IPMI2 RAKP HMAC-MD5
+  7401     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  MySQL $A$ (sha256crypt)
+  7700     . heuristic     sha256           1024           n/a     8.764e+09     n/a  SAP CODVN B (BCODE)
+  7701     . heuristic     sha256           1024           n/a     8.764e+09     n/a  SAP CODVN B (BCODE) from RFC_READ_TABLE
+  7800     . heuristic     sha256           1024           n/a     8.764e+09     n/a  SAP CODVN F/G (PASSCODE)
+  7801     . heuristic     sha256           1024           n/a     8.764e+09     n/a  SAP CODVN F/G (PASSCODE) from RFC_READ_TABLE
+  7900     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Drupal7
+  8000     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Sybase ASE
+  8100     . heuristic       sha1            560           n/a     1.603e+10     n/a  Citrix NetScaler (SHA1)
+  8200     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  1Password, cloudkeychain
+  8400     . heuristic     sha256           1024           n/a     8.764e+09     n/a  WBB3 (Woltlab Burning Board)
+  8500     . heuristic     sha256           1024           n/a     8.764e+09     n/a  RACF
+  8501     . heuristic     sha256           1024           n/a     8.764e+09     n/a  AS/400 DES
+  8600     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Lotus Notes/Domino 5
+  8700     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Lotus Notes/Domino 6
+  8800     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Android FDE <= 4.3
+  9000     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Password Safe v2
+  9100     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Lotus Notes/Domino 8
+  9710     . heuristic        md5            288           n/a     3.116e+10     n/a  MS Office <= 2003 $0/$1, MD5 + RC4, collider #1
+  9720     . heuristic        md5            288           n/a     3.116e+10     n/a  MS Office <= 2003 $0/$1, MD5 + RC4, collider #2
+  9810     . heuristic       sha1            560           n/a     1.603e+10     n/a  MS Office <= 2003 $3, SHA1 + RC4, collider #1
+  9820     . heuristic       sha1            560           n/a     1.603e+10     n/a  MS Office <= 2003 $3, SHA1 + RC4, collider #2
+  9900     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Radmin2
+ 10000     Y heuristic     sha256         262144           n/a     3.423e+07     n/a  Django (PBKDF2-SHA256)
+ 10100     . heuristic     sha256           1024           n/a     8.764e+09     n/a  SipHash
+ 10200     . heuristic        md5            288           n/a     3.116e+10     n/a  CRAM-MD5
+ 10300     Y heuristic       sha1            560           n/a     1.603e+10     n/a  SAP CODVN H (PWDSALTEDHASH) iSSHA-1
+ 10410     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PDF 1.1 - 1.3 (Acrobat 2 - 4), collider #1
+ 10420     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PDF 1.1 - 1.3 (Acrobat 2 - 4), collider #2
+ 10810     . heuristic     sha384           2432           n/a     3.690e+09     n/a  sha384($pass.$salt)
+ 10820     . heuristic     sha384           2432           n/a     3.690e+09     n/a  sha384($salt.$pass)
+ 10830     . heuristic     sha384           2432           n/a     3.690e+09     n/a  sha384(utf16le($pass).$salt)
+ 10840     . heuristic     sha384           2432           n/a     3.690e+09     n/a  sha384($salt.utf16le($pass))
+ 10870     . heuristic     sha384           2432           n/a     3.690e+09     n/a  sha384(utf16le($pass))
+ 10900     Y heuristic     sha256        2097152           n/a     4.279e+06     n/a  PBKDF2-HMAC-SHA256
+ 10901     Y heuristic     sha256        2097152           n/a     4.279e+06     n/a  RedHat 389-DS LDAP (PBKDF2-HMAC-SHA256)
+ 11000     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PrestaShop
+ 11100     . heuristic        md5            288           n/a     3.116e+10     n/a  PostgreSQL CRAM (MD5)
+ 11200     . heuristic       sha1            560           n/a     1.603e+10     n/a  MySQL CRAM (SHA1)
+ 11300     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin/Litecoin wallet.dat
+ 11400     . heuristic        md5            288           n/a     3.116e+10     n/a  SIP digest authentication (MD5)
+ 11750     . heuristic   gost2012          33600           n/a     2.671e+08     n/a  HMAC-Streebog-256 (key = $pass), big-endian
+ 11760     . heuristic   gost2012          33600           n/a     2.671e+08     n/a  HMAC-Streebog-256 (key = $salt), big-endian
+ 11850     . heuristic   gost2012          33600           n/a     2.671e+08     n/a  HMAC-Streebog-512 (key = $pass), big-endian
+ 11860     . heuristic   gost2012          33600           n/a     2.671e+08     n/a  HMAC-Streebog-512 (key = $salt), big-endian
+ 11900     Y heuristic        md5        2304000           n/a     3.895e+06     n/a  PBKDF2-HMAC-MD5
+ 12000     Y heuristic       sha1        4480000           n/a     2.003e+06     n/a  PBKDF2-HMAC-SHA1
+ 12001     Y heuristic       sha1       18350080           n/a     4.890e+05     n/a  Atlassian (PBKDF2-HMAC-SHA1)
+ 12100     Y heuristic     sha512        9961472           n/a     9.009e+05     n/a  PBKDF2-HMAC-SHA512
+ 12150     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  Apache Shiro 1 SHA-512
+ 12400     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  BSDi Crypt, Extended DES
+ 12600     . heuristic     sha256           1024           n/a     8.764e+09     n/a  ColdFusion 10+
+ 12700     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Blockchain, My Wallet
+ 12800     Y heuristic     sha256     8191991808           n/a     1.095e+03     n/a  MS-AzureSync PBKDF2-HMAC-SHA256
+ 12900     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Android FDE (Samsung DEK)
+ 13200     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  AxCrypt 1
+ 13300     . heuristic       sha1            560           n/a     1.603e+10     n/a  AxCrypt 1 in-memory SHA1
+ 13500     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PeopleSoft PS_TOKEN
+ 13711     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 512 bit (legacy)
+ 13712     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 1024 bit (legacy)
+ 13713     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 1536 bit (legacy)
+ 13721     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  VeraCrypt SHA512 + XTS 512 bit (legacy)
+ 13722     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  VeraCrypt SHA512 + XTS 1024 bit (legacy)
+ 13723     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  VeraCrypt SHA512 + XTS 1536 bit (legacy)
+ 13731     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  VeraCrypt Whirlpool + XTS 512 bit (legacy)
+ 13732     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  VeraCrypt Whirlpool + XTS 1024 bit (legacy)
+ 13733     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  VeraCrypt Whirlpool + XTS 1536 bit (legacy)
+ 13741     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 512 bit + boot-mode (legacy)
+ 13742     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 1024 bit + boot-mode (legacy)
+ 13743     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 1536 bit + boot-mode (legacy)
+ 13751     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 512 bit (legacy)
+ 13752     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 1024 bit (legacy)
+ 13753     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 1536 bit (legacy)
+ 13761     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 512 bit + boot-mode (legacy)
+ 13762     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 1024 bit + boot-mode (legacy)
+ 13763     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 1536 bit + boot-mode (legacy)
+ 13771     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 512 bit (legacy)
+ 13772     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 1024 bit (legacy)
+ 13773     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 1536 bit (legacy)
+ 13781     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 512 bit + boot-mode (legacy)
+ 13782     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 1024 bit + boot-mode (legacy)
+ 13783     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 1536 bit + boot-mode (legacy)
+ 13800     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Windows Phone 8+ PIN/password
+ 13900     . heuristic     sha256           1024           n/a     8.764e+09     n/a  OpenCart
+ 14200     Y heuristic    aes_enc            600           n/a     1.496e+10     n/a  RACF KDFAES
+ 14400     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(CX)
+ 14500     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Linux Kernel Crypto API (2.4)
+ 14600     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  LUKS v1 (legacy)
+ 14700     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  iTunes backup < 10.0
+ 14800     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  iTunes backup >= 10.0
+ 14900     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Skip32 (PT = $salt, key = $pass)
+ 15000     . heuristic     sha256           1024           n/a     8.764e+09     n/a  FileZilla Server >= 0.9.55
+ 15100     Y heuristic       sha1            560           n/a     1.603e+10     n/a  Juniper/NetBSD sha1crypt
+ 15200     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Blockchain, My Wallet, V2
+ 15310     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  DPAPI masterkey file v1 (context 3)
+ 15400     . heuristic     sha256           1024           n/a     8.764e+09     n/a  ChaCha20
+ 15500     . heuristic       sha1            560           n/a     1.603e+10     n/a  JKS Java Key Store Private Keys (SHA1)
+ 15910     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  DPAPI masterkey file v2 (context 3)
+ 16000     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Tripcode
+ 16200     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Apple Secure Notes
+ 16400     . heuristic        md5            288           n/a     3.116e+10     n/a  CRAM-MD5 Dovecot
+ 16500     . heuristic     sha256           1024           n/a     8.764e+09     n/a  JWT (JSON Web Token)
+ 16501     . heuristic     sha256           8192           n/a     1.095e+09     n/a  Perl Mojolicious session cookie (HMAC-SHA256, >= v9.19)
+ 16600     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Electrum Wallet (Salt-Type 1-3)
+ 16800     Y heuristic     sha256        2643968           n/a     3.394e+06     n/a  WPA-PMKID-PBKDF2
+ 16801     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  WPA-PMKID-PMK
+ 16900     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Ansible Vault
+ 17020     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  GPG (AES-128/AES-256 (SHA-512($pass)))
+ 17040     Y heuristic       sha1            560           n/a     1.603e+10     n/a  GPG (CAST5 (SHA-1($pass)))
+ 17050     Y heuristic       sha1            560           n/a     1.603e+10     n/a  GPG (AES-OCB-128 (SHA-1($pass)))
+ 17210     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PKZIP (Uncompressed)
+ 17225     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PKZIP (Mixed Multi-File)
+ 17230     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PKZIP (Mixed Multi-File Checksum-Only)
+ 17300     . heuristic     keccak           3800           n/a     2.362e+09     n/a  SHA3-224
+ 17500     . heuristic     keccak           3800           n/a     2.362e+09     n/a  SHA3-384
+ 17700     . heuristic     keccak           3800           n/a     2.362e+09     n/a  Keccak-224
+ 17800     .     exact     keccak           3800           n/a     2.362e+09     n/a  Keccak-256
+ 17900     .     exact     keccak           3800           n/a     2.362e+09     n/a  Keccak-384
+ 18000     . heuristic     keccak           3800           n/a     2.362e+09     n/a  Keccak-512
+ 18400     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Open Document Format (ODF) 1.2 (SHA-256, AES)
+ 18500     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(md5(md5($pass)))
+ 18600     Y heuristic       sha1            560           n/a     1.603e+10     n/a  Open Document Format (ODF) 1.1 (SHA-1, Blowfish)
+ 18800     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Blockchain, My Wallet, Second Password (SHA256)
+ 18900     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Android Backup
+ 19000     Y heuristic        md5            288           n/a     3.116e+10     n/a  QNX /etc/shadow (MD5)
+ 19100     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  QNX /etc/shadow (SHA256)
+ 19200     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  QNX /etc/shadow (SHA512)
+ 19210     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  QNX 7 /etc/shadow (SHA512)
+ 19300     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1($salt1.$pass.$salt2)
+ 19500     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Ruby on Rails Restful-Authentication
+ 19800     Y     exact       sha1        9175640           n/a     9.780e+05     n/a  Kerberos 5, etype 17, Pre-Auth
+ 19900     Y     exact       sha1        9175640           n/a     9.780e+05     n/a  Kerberos 5, etype 18, Pre-Auth
+ 20011     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  DiskCryptor SHA512 + XTS 512 bit
+ 20012     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  DiskCryptor SHA512 + XTS 1024 bit
+ 20013     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  DiskCryptor SHA512 + XTS 1536 bit
+ 20200     Y heuristic     sha512        1245184           n/a     7.207e+06     n/a  Python passlib pbkdf2-sha512
+ 20300     Y heuristic     sha256         262144           n/a     3.423e+07     n/a  Python passlib pbkdf2-sha256
+ 20400     Y heuristic       sha1       73360000           n/a     1.223e+05     n/a  Python passlib pbkdf2-sha1
+ 20510     . heuristic     sha256           1024           n/a     8.764e+09     n/a  PKZIP Master Key (6 byte optimization)
+ 20600     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Oracle Transportation Management (SHA256)
+ 20710     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256(sha256($pass).$salt)
+ 20711     . heuristic     sha256           1024           n/a     8.764e+09     n/a  AuthMe sha256
+ 20712     . heuristic     sha256           1024           n/a     8.764e+09     n/a  RSA Security Analytics / NetWitness (sha256)
+ 20720     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256($salt.sha256($pass))
+ 20730     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256(sha256($pass.$salt))
+ 20800     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256(md5($pass))
+ 20900     . heuristic       sha1            560           n/a     1.603e+10     n/a  md5(sha1($pass).md5($pass).sha1($pass))
+ 21000     . heuristic     sha512           2432           n/a     3.690e+09     n/a  BitShares v0.x - sha512(sha512_bin(pass))
+ 21100     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1(md5($pass.$salt))
+ 21200     . heuristic       sha1            560           n/a     1.603e+10     n/a  md5(sha1($salt).md5($pass))
+ 21300     . heuristic       sha1            560           n/a     1.603e+10     n/a  md5($salt.sha1($salt.$pass))
+ 21310     . heuristic       sha1            560           n/a     1.603e+10     n/a  md5($salt1.sha1($salt2.$pass))
+ 21400     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256(sha256_bin($pass))
+ 21420     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256($salt.sha256_bin($pass))
+ 21500     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  SolarWinds Orion
+ 21501     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  SolarWinds Orion v2
+ 21600     Y heuristic     sha512        2432000           n/a     3.690e+06     n/a  Web2py pbkdf2-sha512
+ 21700     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Electrum Wallet (Salt-Type 4)
+ 21800     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Electrum Wallet (Salt-Type 5)
+ 21900     . heuristic        md5            288           n/a     3.116e+10     n/a  md5(md5(md5($pass.$salt1)).$salt2)
+ 22001     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  WPA-PMK-PMKID+EAPOL
+ 22200     . heuristic     sha512           2432           n/a     3.690e+09     n/a  Citrix NetScaler (SHA512)
+ 22300     . heuristic     sha256           1024           n/a     8.764e+09     n/a  sha256($salt.$pass.$salt)
+ 22301     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Telegram Mobile App Passcode (SHA256)
+ 22400     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  AES Crypt (SHA256)
+ 22500     . heuristic        md5            288           n/a     3.116e+10     n/a  MultiBit Classic .key (MD5)
+ 22600     Y heuristic       sha1       17920000           n/a     5.008e+05     n/a  Telegram Desktop < v2.1.14 (PBKDF2-HMAC-SHA1)
+ 22700     Y heuristic     sha256         318464           n/a     2.818e+07     n/a  MultiBit HD (scrypt)
+ 22800     . heuristic        md5            288           n/a     3.116e+10     n/a  Simpla CMS - md5($salt.$pass.md5($pass))
+ 22911     . heuristic     sha256           1024           n/a     8.764e+09     n/a  RSA/DSA/EC/OpenSSH Private Keys ($0$)
+ 22931     . heuristic     sha256           1024           n/a     8.764e+09     n/a  RSA/DSA/EC/OpenSSH Private Keys ($1, $3$)
+ 22941     . heuristic     sha256           1024           n/a     8.764e+09     n/a  RSA/DSA/EC/OpenSSH Private Keys ($4$)
+ 22951     . heuristic     sha256           1024           n/a     8.764e+09     n/a  RSA/DSA/EC/OpenSSH Private Keys ($5$)
+ 23001     . heuristic    aes_enc            600           n/a     1.496e+10     n/a  SecureZIP AES-128
+ 23002     . heuristic    aes_enc            600           n/a     1.496e+10     n/a  SecureZIP AES-192
+ 23003     . heuristic    aes_enc            600           n/a     1.496e+10     n/a  SecureZIP AES-256
+ 23200     Y heuristic       sha1        2293760           n/a     3.912e+06     n/a  XMPP SCRAM PBKDF2-SHA1
+ 23300     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Apple iWork
+ 23500     Y heuristic    aes_enc            600           n/a     1.496e+10     n/a  AxCrypt 2 AES-128
+ 23600     Y heuristic    aes_enc            600           n/a     1.496e+10     n/a  AxCrypt 2 AES-256
+ 23700     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  RAR3-p (Uncompressed)
+ 23900     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  BestCrypt v3 Volume Encryption
+ 24000     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  BestCrypt v4 Volume Encryption
+ 24100     Y heuristic       sha1            560           n/a     1.603e+10     n/a  MongoDB ServerKey SCRAM-SHA-1
+ 24200     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  MongoDB ServerKey SCRAM-SHA-256
+ 24300     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1($salt.sha1($pass.$salt))
+ 24410     Y heuristic       sha1       25365760           n/a     3.538e+05     n/a  PKCS#8 Private Keys (PBKDF2-HMAC-SHA1 + 3DES/AES)
+ 24420     Y heuristic     sha256       24248320           n/a     3.701e+05     n/a  PKCS#8 Private Keys (PBKDF2-HMAC-SHA256 + 3DES/AES)
+ 24500     Y heuristic     sha512     1945600000           n/a     4.612e+03     n/a  Telegram Desktop >= v2.1.14 (PBKDF2-HMAC-SHA512)
+ 24600     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  SQLCipher
+ 24700     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Stuffit5
+ 24800     . heuristic       sha1           4480           n/a     2.003e+09     n/a  Umbraco HMAC-SHA1
+ 24900     . heuristic        md5            288           n/a     3.116e+10     n/a  Dahua Authentication MD5
+ 24901     . heuristic        md5            288           n/a     3.116e+10     n/a  Besder Authentication MD5
+ 25000     Y heuristic       sha1           4480           n/a     2.003e+09     n/a  SNMPv3 HMAC-MD5-96/HMAC-SHA1-96
+ 25100     Y heuristic        md5           2304           n/a     3.895e+09     n/a  SNMPv3 HMAC-MD5-96
+ 25200     Y heuristic       sha1           4480           n/a     2.003e+09     n/a  SNMPv3 HMAC-SHA1-96
+ 25300     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  MS Office 2016 - SheetProtection
+ 25400     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  PDF 1.4 - 1.6 (Acrobat 5 - 8) - user and owner pass
+ 25600     Y heuristic        md5        1179648           n/a     7.607e+06     n/a  bcrypt(md5($pass))
+ 25700     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MurmurHash
+ 25800     Y heuristic       sha1         215600           n/a     4.162e+07     n/a  bcrypt(sha1($pass))
+ 25900     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  KNX IP Secure - Device Authentication Code
+ 26000     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Mozilla key3.db
+ 26200     . heuristic     sha256           1024           n/a     8.764e+09     n/a  OpenEdge Progress Encode
+ 26300     . heuristic     sha256           1024           n/a     8.764e+09     n/a  FortiGate256 (FortiOS256)
+ 26402     . heuristic    aes_enc            600           n/a     1.496e+10     n/a  AES-192-ECB NOKDF (PT = $salt, key = $pass)
+ 26500     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  iPhone passcode (UID key + System Keybag)
+ 26600     Y heuristic    aes_enc            600           n/a     1.496e+10     n/a  MetaMask Wallet (needs all data, checks AES-GCM tag)
+ 26610     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  MetaMask Wallet (short hash, plaintext check)
+ 26700     Y heuristic     sha224           8192           n/a     1.095e+09     n/a  SNMPv3 HMAC-SHA224-128
+ 26800     Y heuristic     sha256           8192           n/a     1.095e+09     n/a  SNMPv3 HMAC-SHA256-192
+ 26900     Y heuristic     sha384          19456           n/a     4.612e+08     n/a  SNMPv3 HMAC-SHA384-256
+ 27000     Y heuristic        md4            144           n/a     6.232e+10     n/a  NetNTLMv1 / NetNTLMv1+ESS (NT)
+ 27100     Y heuristic        md4            144           n/a     6.232e+10     n/a  NetNTLMv2 (NT)
+ 27200     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Ruby on Rails Restful Auth (one round, no sitekey)
+ 27300     Y heuristic     sha512          19456           n/a     4.612e+08     n/a  SNMPv3 HMAC-SHA512-384
+ 27400     Y heuristic       sha1       44800000           n/a     2.003e+05     n/a  VMware VMX (PBKDF2-HMAC-SHA1 + AES-256-CBC)
+ 27500     Y heuristic     sha256     2129920000           n/a     4.213e+03     n/a  VirtualBox (PBKDF2-HMAC-SHA256 & AES-128-XTS)
+ 27600     Y heuristic     sha256     1310720000           n/a     6.847e+03     n/a  VirtualBox (PBKDF2-HMAC-SHA256 & AES-256-XTS)
+ 27700     Y heuristic     sha256       16777216           n/a     5.349e+05     n/a  MultiBit Classic .wallet (scrypt)
+ 27800     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MurmurHash3
+ 27900     . heuristic     sha256           1024           n/a     8.764e+09     n/a  CRC32C
+ 28000     . heuristic     sha256           1024           n/a     8.764e+09     n/a  CRC64Jones
+ 28200     Y heuristic     sha256       16777216           n/a     5.349e+05     n/a  Exodus Desktop Wallet (scrypt)
+ 28300     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Teamspeak 3 (channel hash)
+ 28400     Y heuristic     sha512        9961472           n/a     9.009e+05     n/a  bcrypt(sha512($pass))
+ 28501     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin WIF private key (P2PKH), compressed
+ 28502     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin WIF private key (P2PKH), uncompressed
+ 28503     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin WIF private key (P2WPKH, Bech32), compressed
+ 28504     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin WIF private key (P2WPKH, Bech32), uncompressed
+ 28505     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin WIF private key (P2SH(P2WPKH)), compressed
+ 28506     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin WIF private key (P2SH(P2WPKH)), uncompressed
+ 28600     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  PostgreSQL SCRAM-SHA-256
+ 28700     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Amazon AWS Signature Version 4
+ 28800     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Kerberos 5, etype 17, DB
+ 28900     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Kerberos 5, etype 18, DB
+ 29000     . heuristic       sha1            560           n/a     1.603e+10     n/a  sha1($salt.sha1(utf16le($username).':'.utf16le($pass)))
+ 29100     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Flask Session Cookie ($salt.$salt.$pass)
+ 29200     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Radmin3
+ 29311     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 512 bit
+ 29312     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 1024 bit
+ 29313     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 1536 bit
+ 29321     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  TrueCrypt SHA512 + XTS 512 bit
+ 29322     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  TrueCrypt SHA512 + XTS 1024 bit
+ 29323     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  TrueCrypt SHA512 + XTS 1536 bit
+ 29331     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  TrueCrypt Whirlpool + XTS 512 bit
+ 29332     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  TrueCrypt Whirlpool + XTS 1024 bit
+ 29333     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  TrueCrypt Whirlpool + XTS 1536 bit
+ 29342     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 1024 bit + boot-mode
+ 29343     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  TrueCrypt RIPEMD160 + XTS 1536 bit + boot-mode
+ 29411     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 512 bit
+ 29412     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 1024 bit
+ 29413     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 1536 bit
+ 29422     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  VeraCrypt SHA512 + XTS 1024 bit
+ 29423     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  VeraCrypt SHA512 + XTS 1536 bit
+ 29431     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  VeraCrypt Whirlpool + XTS 512 bit
+ 29432     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  VeraCrypt Whirlpool + XTS 1024 bit
+ 29433     Y heuristic  whirlpool           3600           n/a     2.493e+09     n/a  VeraCrypt Whirlpool + XTS 1536 bit
+ 29441     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 512 bit + boot-mode
+ 29442     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 1024 bit + boot-mode
+ 29443     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  VeraCrypt RIPEMD160 + XTS 1536 bit + boot-mode
+ 29451     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 512 bit
+ 29452     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 1024 bit
+ 29453     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 1536 bit
+ 29461     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 512 bit + boot-mode
+ 29462     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 1024 bit + boot-mode
+ 29463     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  VeraCrypt SHA256 + XTS 1536 bit + boot-mode
+ 29471     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 512 bit
+ 29472     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 1024 bit
+ 29473     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 1536 bit
+ 29481     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 512 bit + boot-mode
+ 29482     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 1024 bit + boot-mode
+ 29483     Y heuristic   gost2012           4200           n/a     2.137e+09     n/a  VeraCrypt Streebog-512 + XTS 1536 bit + boot-mode
+ 29512     Y heuristic       sha1            560           n/a     1.603e+10     n/a  LUKS v1 SHA-1 + Serpent
+ 29513     Y heuristic       sha1            560           n/a     1.603e+10     n/a  LUKS v1 SHA-1 + Twofish
+ 29521     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  LUKS v1 SHA-256 + AES
+ 29522     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  LUKS v1 SHA-256 + Serpent
+ 29523     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  LUKS v1 SHA-256 + Twofish
+ 29531     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  LUKS v1 SHA-512 + AES
+ 29532     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  LUKS v1 SHA-512 + Serpent
+ 29533     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  LUKS v1 SHA-512 + Twofish
+ 29541     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  LUKS v1 RIPEMD-160 + AES
+ 29542     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  LUKS v1 RIPEMD-160 + Serpent
+ 29543     Y heuristic  ripemd160           1050           n/a     8.547e+09     n/a  LUKS v1 RIPEMD-160 + Twofish
+ 29600     Y heuristic    aes_enc      599999400           n/a     1.496e+04     n/a  Terra Station Wallet (AES256-CBC(PBKDF2($pass)))
+ 29700     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  KeePass (KDBX v2/v3) - keyfile only
+ 29800     Y heuristic     sha256       33554432           n/a     2.674e+05     n/a  Bisq .wallet (scrypt)
+ 29910     Y heuristic     sha256         123904           n/a     7.243e+07     n/a  ENCsecurity Datavault (PBKDF2/no keychain)
+ 29920     Y heuristic     sha256         237568           n/a     3.777e+07     n/a  ENCsecurity Datavault (PBKDF2/keychain)
+ 29930     Y heuristic        md5            288           n/a     3.116e+10     n/a  ENCsecurity Datavault (MD5/no keychain)
+ 29940     Y heuristic        md5            288           n/a     3.116e+10     n/a  ENCsecurity Datavault (MD5/keychain)
+ 30000     . heuristic        md5           2304           n/a     3.895e+09     n/a  Python Werkzeug MD5 (HMAC-MD5 (key = $salt))
+ 30120     . heuristic     sha256           8192           n/a     1.095e+09     n/a  Python Werkzeug SHA256 (HMAC-SHA256 (key = $salt))
+ 30420     . heuristic     sha256           1024           n/a     8.764e+09     n/a  DANE RFC7929/RFC8162 SHA2-256
+ 30500     . heuristic        md5            288           n/a     3.116e+10     n/a  md5(md5($salt).md5(md5($pass)))
+ 30600     Y heuristic     sha256         310272           n/a     2.892e+07     n/a  bcrypt(sha256($pass))
+ 30601     Y heuristic     sha256        2097152           n/a     4.279e+06     n/a  bcrypt(HMAC-SHA256($pass))
+ 30700     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Anope IRC Services (enc_sha256)
+ 30901     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin raw private key (P2PKH), compressed
+ 30902     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin raw private key (P2PKH), uncompressed
+ 30903     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin raw private key (P2WPKH, Bech32), compressed
+ 30904     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin raw private key (P2WPKH, Bech32), uncompressed
+ 30905     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin raw private key (P2SH(P2WPKH)), compressed
+ 30906     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Bitcoin raw private key (P2SH(P2WPKH)), uncompressed
+ 31200     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Veeam VBK
+ 31300     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MS SNTP
+ 31400     . heuristic     sha256           1024           n/a     8.764e+09     n/a  SecureCRT MasterPassphrase v2
+ 31500     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Domain Cached Credentials (DCC), MS Cache (NT)
+ 31600     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Domain Cached Credentials 2 (DCC2), MS Cache 2, (NT)
+ 31700     . heuristic        md5            288           n/a     3.116e+10     n/a  md5(md5(md5($pass).$salt1).$salt2)
+ 31800     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  1Password, mobilekeychain (1Password 8)
+ 31900     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  MetaMask Mobile Wallet
+ 32000     Y heuristic        md5            288           n/a     3.116e+10     n/a  NetIQ SSPR (MD5)
+ 32010     Y heuristic       sha1            560           n/a     1.603e+10     n/a  NetIQ SSPR (SHA1)
+ 32020     Y heuristic       sha1            560           n/a     1.603e+10     n/a  NetIQ SSPR (SHA-1 with Salt)
+ 32030     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  NetIQ SSPR (SHA-256 with Salt)
+ 32031     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Adobe AEM (SSPR, SHA-256 with Salt)
+ 32040     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  NetIQ SSPR (SHA-512 with Salt)
+ 32041     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  Adobe AEM (SSPR, SHA-512 with Salt)
+ 32050     Y heuristic       sha1      448000000           n/a     2.003e+04     n/a  NetIQ SSPR (PBKDF2WithHmacSHA1)
+ 32060     Y heuristic     sha256        2097152           n/a     4.279e+06     n/a  NetIQ SSPR (PBKDF2WithHmacSHA256)
+ 32070     Y heuristic     sha512        9961472           n/a     9.009e+05     n/a  NetIQ SSPR (PBKDF2WithHmacSHA512)
+ 32100     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Kerberos 5, etype 17, AS-REP
+ 32200     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Kerberos 5, etype 18, AS-REP
+ 32300     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Empire CMS (Admin password)
+ 32410     . heuristic     sha512           2432           n/a     3.690e+09     n/a  sha512(sha512($pass).$salt)
+ 32420     . heuristic     sha512           2432           n/a     3.690e+09     n/a  sha512(sha512_bin($pass).$salt)
+ 32500     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Dogechain.info Wallet
+ 32600     . heuristic  whirlpool           3600           n/a     2.493e+09     n/a  CubeCart (whirlpool($salt.$pass.$salt))
+ 32700     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Kremlin Encrypt 3.0 w/NewDES
+ 32800     . heuristic       sha1            560           n/a     1.603e+10     n/a  md5(sha1(md5($pass)))
+ 32900     Y heuristic       sha1            560           n/a     1.603e+10     n/a  PBKDF1-SHA1
+ 33000     . heuristic        md5            288           n/a     3.116e+10     n/a  md5($salt1.$pass.$salt2)
+ 33100     . heuristic        md5            288           n/a     3.116e+10     n/a  md5($salt.md5($pass).$salt)
+ 33300     . heuristic    blake2b           9216           n/a     9.738e+08     n/a  HMAC-BLAKE2S (key = $pass)
+ 33400     Y heuristic     sha512       79691776           n/a     1.126e+05     n/a  mega.nz password-protected link (PBKDF2-HMAC-SHA512)
+ 33500     . heuristic     sha256           1024           n/a     8.764e+09     n/a  RC4 40-bit DropN
+ 33501     . heuristic     sha256           1024           n/a     8.764e+09     n/a  RC4 72-bit DropN
+ 33502     . heuristic     sha256           1024           n/a     8.764e+09     n/a  RC4 104-bit DropN
+ 33600     . heuristic  ripemd160           1050           n/a     8.547e+09     n/a  RIPEMD-320
+ 33650     . heuristic  ripemd160           8400           n/a     1.068e+09     n/a  HMAC-RIPEMD320 (key = $pass)
+ 33660     . heuristic  ripemd160           8400           n/a     1.068e+09     n/a  HMAC-RIPEMD320 (key = $salt)
+ 33800     Y heuristic     sha256        4194304           n/a     2.140e+06     n/a  WBB4 (Woltlab Burning Board) [bcrypt(bcrypt($pass))]
+ 33900     Y heuristic     sha256     8191991808           n/a     1.095e+03     n/a  Citrix NetScaler (PBKDF2-HMAC-SHA256)
+ 34200     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MurmurHash64A
+ 34201     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MurmurHash64A (zero seed)
+ 34211     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MurmurHash64A truncated (zero seed)
+ 34300     Y heuristic     sha256         651264           n/a     1.378e+07     n/a  KeePass Argon2 (KDBX v4)
+ 34301     Y heuristic    aes_enc            600           n/a     1.496e+10     n/a  KeePass AESKDF (KDBX v4)
+ 34400     . heuristic     sha224           1024           n/a     8.764e+09     n/a  sha224(sha224($pass))
+ 34500     . heuristic     sha224           1024           n/a     8.764e+09     n/a  sha224(sha1($pass))
+ 34600     . heuristic     sha256           1024           n/a     8.764e+09     n/a  MD6 (256)
+ 34700     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Blockchain, My Wallet, Legacy Wallets
+ 34800     . heuristic    blake2b           1152           n/a     7.790e+09     n/a  BLAKE2b-256
+ 34810     . heuristic    blake2b           1152           n/a     7.790e+09     n/a  BLAKE2b-256($pass.$salt)
+ 34820     . heuristic    blake2b           1152           n/a     7.790e+09     n/a  BLAKE2b-256($salt.$pass)
+ 35000     Y heuristic     sha512           2432           n/a     3.690e+09     n/a  SAP CODVN H (PWDSALTEDHASH) isSHA512
+ 35200     . heuristic       sha1            560           n/a     1.603e+10     n/a  AS/400 SSHA1
+ 35300     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Kerberos 5, etype 23, TGS-REP (NT)
+ 35400     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Kerberos 5, etype 23, AS-REP (NT)
+ 35500     Y heuristic     sha384        9455616           n/a     9.491e+05     n/a  Wordpress bcrypt(hmac-sha384($pass))
+ 35600     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  gost12512crypt [$gost12512hash$] (Unix)
+ 35700     Y heuristic        md5            288           n/a     3.116e+10     n/a  phpass(md5($pass))
+ 35800     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Symfony Legacy SHA256
+ 70000     Y heuristic     sha256       67108864           n/a     1.337e+05     n/a  Argon2id [Bridged: reference implementation + tunings]
+ 70100     Y heuristic     sha256       16777216           n/a     5.349e+05     n/a  scrypt [Bridged: Scrypt-Jane SMix]
+ 70200     Y heuristic     sha256       16777216           n/a     5.349e+05     n/a  scrypt [Bridged: Scrypt-Yescrypt]
+ 72000     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Generic Hash [Bridged: Python Interpreter free-threading]
+ 73000     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Generic Hash [Bridged: Python Interpreter with GIL]
+ 74000     Y heuristic     sha256           1024           n/a     8.764e+09     n/a  Generic Hash [Bridged: Rust]
+ 99999     . heuristic     sha256           1024           n/a     8.764e+09     n/a  Plaintext
