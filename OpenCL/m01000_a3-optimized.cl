@@ -266,6 +266,7 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
 
   MD4_STEP_REV1(MD4_G_S, b_rev, c_rev, d_rev, a_rev, w[15], MD4C01, MD4S13);
   MD4_STEP_REV1(MD4_G_S, c_rev, d_rev, a_rev, b_rev, w[11], MD4C01, MD4S12);
+  MD4_STEP_REV1(MD4_G_S, d_rev, a_rev, b_rev, c_rev, w[ 7], MD4C01, MD4S11);
 
   /**
    * loop
@@ -286,6 +287,10 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
     pre_a = pre_a - w0;
     pre_b = pre_b - MD4_G (sav_c, sav_d, pre_a);
     pre_c = pre_c - MD4_G (sav_d, pre_a, pre_b);
+
+    u32x pre_d = d_rev;
+
+    pre_d = pre_d - MD4_G (pre_a, pre_b, pre_c);
 
     u32x a = MD4M_A;
     u32x b = MD4M_B;
@@ -318,7 +323,7 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
     MD4_STEP0(MD4_Go, c, d, a, b,     G_w9c01, MD4S12);
     MD4_STEP0(MD4_Go, b, c, d, a,     G_wdc01, MD4S13);
     MD4_STEP0(MD4_Go, a, b, c, d,     G_w2c01, MD4S10);
-    MD4_STEP0(MD4_Go, d, a, b, c,     G_w6c01, MD4S11);
+    MD4_STEP0(MD4_Go, d, a, b, c,     G_w6c01, MD4S11); if (MATCHES_NONE_VV (d, pre_d)) continue;
     MD4_STEP0(MD4_Go, c, d, a, b,     G_wac01, MD4S12); if (MATCHES_NONE_VV (c, pre_c)) continue;
     MD4_STEP0(MD4_Go, b, c, d, a,     G_wec01, MD4S13); if (MATCHES_NONE_VV (b, pre_b)) continue;
     MD4_STEP0(MD4_Go, a, b, c, d,     G_w3c01, MD4S10); if (MATCHES_NONE_VV (a, pre_a)) continue;
