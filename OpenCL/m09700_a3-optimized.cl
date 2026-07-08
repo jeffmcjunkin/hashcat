@@ -13,6 +13,16 @@
 #include M2S(INCLUDE_PATH/inc_cipher_rc4.cl)
 #endif
 
+// autoresearch: ncu shows m09700_s is latency-bound (SM & mem both ~64%, not saturated)
+// with only 16.6% occupancy, register-limited to 8 blocks/SM (~255 regs/thread; block =
+// FIXED_LOCAL_SIZE = 32 threads = 1 warp). Raise minBlocksPerMultiprocessor so ptxas trims
+// registers to fit 10 blocks/SM (~204 regs), lifting occupancy 16.6% -> 20.8% to hide the
+// MD5-ARX and RC4-KSA dependency latency that the extra warps can overlap.
+#if defined IS_CUDA || defined IS_HIP
+#undef  KERNEL_FA
+#define KERNEL_FA __launch_bounds__ (FIXED_LOCAL_SIZE, 10)
+#endif
+
 typedef struct oldoffice01
 {
   u32 version;
