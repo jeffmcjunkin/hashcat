@@ -78,7 +78,7 @@ DECLSPEC void SET_KEY32 (LOCAL_AS u32 *S, const u8 k, const u32 v, MAYBE_UNUSED 
 // Finally we can select the actual target byte from (1 out of 4) from this chunk:
 //   (k & 3)
 
-#define KEY8(t,k) (((k) & 3) + (((k) / 4) * 128) + (((t) & 31) * 4) + (((t) / 32) * 8192))
+#define KEY8(t,k) (((k) & 3) | (((k) / 4) * 128) | (((t) & 31) * 4) | (((t) / 32) * 8192))
 
 DECLSPEC u8 GET_KEY8 (LOCAL_AS u32 *S, const u8 k, const u64 lid)
 {
@@ -94,7 +94,7 @@ DECLSPEC void SET_KEY8 (LOCAL_AS u32 *S, const u8 k, const u8 v, const u64 lid)
   S8[KEY8 (lid, k)] = v;
 }
 
-#define KEY32(t,k) (((k) * 32) + ((t) & 31) + (((t) / 32) * 2048))
+#define KEY32(t,k) (((k) * 32) | ((t) & 31) | (((t) / 32) * 2048))
 
 DECLSPEC void SET_KEY32 (LOCAL_AS u32 *S, const u8 k, const u32 v, const u64 lid)
 {
