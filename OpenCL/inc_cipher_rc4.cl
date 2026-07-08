@@ -345,47 +345,52 @@ DECLSPEC u8 rc4_next_16 (LOCAL_AS u32 *S, const u8 i, const u8 j, PRIVATE_AS con
     u32 tmp;
 
     u8 idx;
+    u8 sa;
+    u8 sb;
+
+    // fused swap: after swapping S[a]<->S[b], S[a]+S[b] == sa+sb (values already loaded),
+    // so the two post-swap shared-mem reads for idx are replaced by a register add.
 
     a += 1;
-    b += GET_KEY8 (S, a, lid);
-
-    rc4_swap (S, a, b, lid);
-
-    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
-
+    sa = GET_KEY8 (S, a, lid);
+    b += sa;
+    sb = GET_KEY8 (S, b, lid);
+    SET_KEY8 (S, a, sb, lid);
+    SET_KEY8 (S, b, sa, lid);
+    idx = sa + sb;
     tmp = GET_KEY8 (S, idx, lid);
 
     xor4 |= tmp <<  0;
 
     a += 1;
-    b += GET_KEY8 (S, a, lid);
-
-    rc4_swap (S, a, b, lid);
-
-    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
-
+    sa = GET_KEY8 (S, a, lid);
+    b += sa;
+    sb = GET_KEY8 (S, b, lid);
+    SET_KEY8 (S, a, sb, lid);
+    SET_KEY8 (S, b, sa, lid);
+    idx = sa + sb;
     tmp = GET_KEY8 (S, idx, lid);
 
     xor4 |= tmp <<  8;
 
     a += 1;
-    b += GET_KEY8 (S, a, lid);
-
-    rc4_swap (S, a, b, lid);
-
-    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
-
+    sa = GET_KEY8 (S, a, lid);
+    b += sa;
+    sb = GET_KEY8 (S, b, lid);
+    SET_KEY8 (S, a, sb, lid);
+    SET_KEY8 (S, b, sa, lid);
+    idx = sa + sb;
     tmp = GET_KEY8 (S, idx, lid);
 
     xor4 |= tmp << 16;
 
     a += 1;
-    b += GET_KEY8 (S, a, lid);
-
-    rc4_swap (S, a, b, lid);
-
-    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
-
+    sa = GET_KEY8 (S, a, lid);
+    b += sa;
+    sb = GET_KEY8 (S, b, lid);
+    SET_KEY8 (S, a, sb, lid);
+    SET_KEY8 (S, b, sa, lid);
+    idx = sa + sb;
     tmp = GET_KEY8 (S, idx, lid);
 
     xor4 |= tmp << 24;
