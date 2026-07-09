@@ -112,11 +112,64 @@ DECLSPEC void hmac_md5_run (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u
   md5_transform (w0, w1, w2, w3, digest);
 }
 
+DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, GLOBAL_AS const u32 *edata2, const u64 lid)
+{
+  u8 a = 0;
+  u8 b = 0;
+  u8 tmp;
+
+  #define RC4_STEP_DISCARD()             \
+  {                                      \
+    a += 1;                              \
+    b += GET_KEY8 (S, a, lid);           \
+    rc4_swap (S, a, b, lid);             \
+  }
+
+  #define RC4_STEP_BYTE(out)             \
+  {                                      \
+    a += 1;                              \
+    b += GET_KEY8 (S, a, lid);           \
+    rc4_swap (S, a, b, lid);             \
+    const u8 idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid); \
+    out = GET_KEY8 (S, idx, lid);        \
+  }
+
+  RC4_STEP_DISCARD ();
+  RC4_STEP_DISCARD ();
+  RC4_STEP_DISCARD ();
+  RC4_STEP_DISCARD ();
+  RC4_STEP_DISCARD ();
+  RC4_STEP_DISCARD ();
+  RC4_STEP_DISCARD ();
+  RC4_STEP_DISCARD ();
+
+  u32 out2 = 0;
+
+  RC4_STEP_BYTE (tmp); out2 |= (u32) tmp <<  0;
+  RC4_STEP_BYTE (tmp); out2 |= (u32) tmp <<  8;
+  RC4_STEP_BYTE (tmp); out2 |= (u32) tmp << 16;
+  RC4_STEP_BYTE (tmp); out2 |= (u32) tmp << 24;
+
+  out2 ^= edata2[2];
+
+  RC4_STEP_BYTE (tmp);
+
+  const u32 out3_0 = (edata2[3] ^ (u32) tmp) & 0x000000ff;
+
+  #undef RC4_STEP_BYTE
+  #undef RC4_STEP_DISCARD
+
+  if (((out2 & 0x00ff80ff) != 0x00300079) &&
+      ((out2 & 0xFF00FFFF) != 0x30008179) &&
+      ((out2 & 0x0000FFFF) != 0x00008279 || out3_0 != 0x00000030))
+      return 0;
+
+  return 1;
+}
+
 DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS const u32 *edata2, const u32 edata2_len, PRIVATE_AS const u32 *K2, PRIVATE_AS const u32 *checksum, const u64 lid)
 {
   rc4_init_128 (S, data, lid);
-
-  u32 out0[4];
 
   /*
     8 first bytes are nonce, then ASN1 structs (DER encoding: TLV)
@@ -132,12 +185,7 @@ DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS
         length is on 3 bytes, the first byte is 0x82, and the fourth byte is 0x30 (class=SEQUENCE)
   */
 
-  rc4_next_16_global (S, 0, 0, edata2 + 0, out0, lid);
-
-  if (((out0[2] & 0x00ff80ff) != 0x00300079) &&
-      ((out0[2] & 0xFF00FFFF) != 0x30008179) &&
-      ((out0[2] & 0x0000FFFF) != 0x00008279 || (out0[3] & 0x000000FF) != 0x00000030))
-      return 0;
+  if (asrep_early_check (S, edata2, lid) == 0) return 0;
 
   rc4_init_128 (S, data, lid);
 
