@@ -144,9 +144,9 @@ DECLSPEC void m17400m (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u32 *w
       a00 ^= keccakf_rndc[0];
     }
 
-    #ifdef _unroll
-    #pragma unroll
-    #endif
+    // Partially unroll pairs of rounds to halve loop-control overhead without
+    // the code-size/register-pressure cost of fully unrolling all 22 rounds.
+    #pragma unroll 2
     for (int round = 1; round < KECCAK_ROUNDS - 1; round++)
     {
       // Theta
@@ -407,9 +407,9 @@ DECLSPEC void m17400s (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u32 *w
       a00 ^= keccakf_rndc[0];
     }
 
-    #ifdef _unroll
-    #pragma unroll
-    #endif
+    // Partially unroll pairs of rounds to halve loop-control overhead without
+    // the code-size/register-pressure cost of fully unrolling all 22 rounds.
+    #pragma unroll 2
     for (int round = 1; round < KECCAK_ROUNDS - 1; round++)
     {
       // Theta
