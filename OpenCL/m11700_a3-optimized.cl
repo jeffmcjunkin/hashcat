@@ -277,18 +277,29 @@ DECLSPEC void m11700m (LOCAL_AS u64 (*s_sbob_sl64)[256], PRIVATE_AS u32 *w, cons
 
     streebog_g_first (h, m, s_sbob_sl64);
 
-    u64x z[8];
+    // Reuse m for the length block so the original vector message is not live
+    // across the register-heavy middle compression. Rebuild it afterwards.
 
-    z[0] = 0;
-    z[1] = 0;
-    z[2] = 0;
-    z[3] = 0;
-    z[4] = 0;
-    z[5] = 0;
-    z[6] = 0;
-    z[7] = hc_swap64 ((u64) (pw_len * 8));
+    m[0] = 0;
+    m[1] = 0;
+    m[2] = 0;
+    m[3] = 0;
+    m[4] = 0;
+    m[5] = 0;
+    m[6] = 0;
+    m[7] = hc_swap64 ((u64) (pw_len * 8));
 
-    streebog_g (h, z, s_sbob_sl64);
+    streebog_g (h, m, s_sbob_sl64);
+
+    m[0] = hc_swap64 (hl32_to_64 (w[15], w[14]));
+    m[1] = hc_swap64 (hl32_to_64 (w[13], w[12]));
+    m[2] = hc_swap64 (hl32_to_64 (w[11], w[10]));
+    m[3] = hc_swap64 (hl32_to_64 (w[ 9], w[ 8]));
+    m[4] = hc_swap64 (hl32_to_64 (w[ 7], w[ 6]));
+    m[5] = hc_swap64 (hl32_to_64 (w[ 5], w[ 4]));
+    m[6] = hc_swap64 (hl32_to_64 (w[ 3], w[ 2]));
+    m[7] = hc_swap64 (hl32_to_64 (w[ 1], w0lr ));
+
     streebog_g_last (h, m, s_sbob_sl64);
 
     const u32x r0 = l32_from_64 (h[0]);
@@ -369,18 +380,29 @@ DECLSPEC void m11700s (LOCAL_AS u64 (*s_sbob_sl64)[256], PRIVATE_AS u32 *w, cons
 
     streebog_g_first (h, m, s_sbob_sl64);
 
-    u64x z[8];
+    // Reuse m for the length block so the original vector message is not live
+    // across the register-heavy middle compression. Rebuild it afterwards.
 
-    z[0] = 0;
-    z[1] = 0;
-    z[2] = 0;
-    z[3] = 0;
-    z[4] = 0;
-    z[5] = 0;
-    z[6] = 0;
-    z[7] = hc_swap64 ((u64) (pw_len * 8));
+    m[0] = 0;
+    m[1] = 0;
+    m[2] = 0;
+    m[3] = 0;
+    m[4] = 0;
+    m[5] = 0;
+    m[6] = 0;
+    m[7] = hc_swap64 ((u64) (pw_len * 8));
 
-    streebog_g (h, z, s_sbob_sl64);
+    streebog_g (h, m, s_sbob_sl64);
+
+    m[0] = hc_swap64 (hl32_to_64 (w[15], w[14]));
+    m[1] = hc_swap64 (hl32_to_64 (w[13], w[12]));
+    m[2] = hc_swap64 (hl32_to_64 (w[11], w[10]));
+    m[3] = hc_swap64 (hl32_to_64 (w[ 9], w[ 8]));
+    m[4] = hc_swap64 (hl32_to_64 (w[ 7], w[ 6]));
+    m[5] = hc_swap64 (hl32_to_64 (w[ 5], w[ 4]));
+    m[6] = hc_swap64 (hl32_to_64 (w[ 3], w[ 2]));
+    m[7] = hc_swap64 (hl32_to_64 (w[ 1], w0lr ));
+
     streebog_g_last (h, m, s_sbob_sl64);
 
     const u32x r0 = l32_from_64 (h[0]);
