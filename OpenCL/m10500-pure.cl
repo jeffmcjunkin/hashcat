@@ -41,7 +41,7 @@ typedef struct pdf
 typedef struct pdf14_tmp
 {
   u32 digest[4];
-  u32 out[4];
+  u32 out[2];
 
 } pdf14_tmp_t;
 
