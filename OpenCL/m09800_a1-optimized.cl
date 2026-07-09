@@ -219,14 +219,17 @@ KERNEL_FQ KERNEL_FA void m09800_m04 (KERN_ATTR_ESALT (oldoffice34_t))
 
     digest[0] = hc_swap32_S (digest[0]);
     digest[1] = hc_swap32_S (digest[1]);
-    digest[2] = hc_swap32_S (digest[2]);
-    digest[3] = hc_swap32_S (digest[3]);
 
     if (version == 3)
     {
       digest[1] &= 0xff;
       digest[2]  = 0;
       digest[3]  = 0;
+    }
+    else
+    {
+      digest[2] = hc_swap32_S (digest[2]);
+      digest[3] = hc_swap32_S (digest[3]);
     }
 
     rc4_init_128 (S, digest, lid);
@@ -567,14 +570,17 @@ KERNEL_FQ KERNEL_FA void m09800_s04 (KERN_ATTR_ESALT (oldoffice34_t))
 
     digest[0] = hc_swap32_S (digest[0]);
     digest[1] = hc_swap32_S (digest[1]);
-    digest[2] = hc_swap32_S (digest[2]);
-    digest[3] = hc_swap32_S (digest[3]);
 
     if (version == 3)
     {
       digest[1] &= 0xff;
       digest[2]  = 0;
       digest[3]  = 0;
+    }
+    else
+    {
+      digest[2] = hc_swap32_S (digest[2]);
+      digest[3] = hc_swap32_S (digest[3]);
     }
 
     rc4_init_128 (S, digest, lid);

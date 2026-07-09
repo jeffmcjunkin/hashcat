@@ -135,14 +135,17 @@ DECLSPEC void m09800m (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, 
 
     digest[0] = hc_swap32_S (digest[0]);
     digest[1] = hc_swap32_S (digest[1]);
-    digest[2] = hc_swap32_S (digest[2]);
-    digest[3] = hc_swap32_S (digest[3]);
 
     if (version == 3)
     {
       digest[1] &= 0xff;
       digest[2]  = 0;
       digest[3]  = 0;
+    }
+    else
+    {
+      digest[2] = hc_swap32_S (digest[2]);
+      digest[3] = hc_swap32_S (digest[3]);
     }
 
     rc4_init_128 (S, digest, lid);
@@ -394,14 +397,17 @@ DECLSPEC void m09800s (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, 
 
     digest[0] = hc_swap32_S (digest[0]);
     digest[1] = hc_swap32_S (digest[1]);
-    digest[2] = hc_swap32_S (digest[2]);
-    digest[3] = hc_swap32_S (digest[3]);
 
     if (version == 3)
     {
       digest[1] &= 0xff;
       digest[2]  = 0;
       digest[3]  = 0;
+    }
+    else
+    {
+      digest[2] = hc_swap32_S (digest[2]);
+      digest[3] = hc_swap32_S (digest[3]);
     }
 
     rc4_init_128 (S, digest, lid);
