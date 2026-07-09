@@ -270,16 +270,22 @@ DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 e
   #define RC4_STEP_DISCARD()             \
   {                                      \
     a += 1;                              \
-    b += GET_KEY8 (S, a, lid);           \
-    rc4_swap (S, a, b, lid);             \
+    const u8 Sa = GET_KEY8 (S, a, lid);  \
+    b += Sa;                             \
+    const u8 Sb = GET_KEY8 (S, b, lid);  \
+    SET_KEY8 (S, a, Sb, lid);            \
+    SET_KEY8 (S, b, Sa, lid);            \
   }
 
   #define RC4_STEP_BYTE(out)             \
   {                                      \
     a += 1;                              \
-    b += GET_KEY8 (S, a, lid);           \
-    rc4_swap (S, a, b, lid);             \
-    const u8 idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid); \
+    const u8 Sa = GET_KEY8 (S, a, lid);  \
+    b += Sa;                             \
+    const u8 Sb = GET_KEY8 (S, b, lid);  \
+    SET_KEY8 (S, a, Sb, lid);            \
+    SET_KEY8 (S, b, Sa, lid);            \
+    const u8 idx = Sa + Sb;              \
     out = GET_KEY8 (S, idx, lid);        \
   }
 
