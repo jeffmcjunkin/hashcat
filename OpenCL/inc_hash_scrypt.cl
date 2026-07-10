@@ -232,6 +232,46 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, PRIVATE_AS 
 
     for (u32 z = 0; z < zSIZE; z++) T4[z] = *Vxx++;
 
+    #if SCRYPT_TMTO == 1
+    if (km)
+    {
+      salsa_r (T);
+
+      #if SCRYPT_R > 1
+      scrypt_shuffle (T);
+      #endif
+    }
+    #elif SCRYPT_TMTO == 2
+    switch (km)
+    {
+      case 3:
+        salsa_r (T);
+
+        #if SCRYPT_R > 1
+        scrypt_shuffle (T);
+        #endif
+
+        // fall-through
+
+      case 2:
+        salsa_r (T);
+
+        #if SCRYPT_R > 1
+        scrypt_shuffle (T);
+        #endif
+
+        // fall-through
+
+      case 1:
+        salsa_r (T);
+
+        #if SCRYPT_R > 1
+        scrypt_shuffle (T);
+        #endif
+
+        break;
+    }
+    #else
     for (u32 i = 0; i < km; i++)
     {
       salsa_r (T);
@@ -240,6 +280,7 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, PRIVATE_AS 
       scrypt_shuffle (T);
       #endif
     }
+    #endif
 
     for (u32 z = 0; z < zSIZE; z++) X4[z] = xor_uint4 (X4[z], T4[z]);
 
@@ -520,4 +561,3 @@ DECLSPEC void scrypt_pbkdf2_ggg (GLOBAL_AS const u32 *pw_buf, const int pw_len, 
 
   scrypt_pbkdf2_body_pg (&sha256_hmac_ctx, out_buf, out_len);
 }
-
