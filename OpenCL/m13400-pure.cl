@@ -45,6 +45,96 @@ typedef struct keepass
 
 } keepass_t;
 
+DECLSPEC void m13400_aes256_encrypt_noswap (PRIVATE_AS const u32 *ks, PRIVATE_AS const u32 *in, PRIVATE_AS u32 *out, SHM_TYPE const u32 *s_te0, SHM_TYPE const u32 *s_te1, SHM_TYPE const u32 *s_te2, SHM_TYPE const u32 *s_te3, SHM_TYPE const u32 *s_te4)
+{
+  u32 s0 = in[0] ^ ks[0];
+  u32 s1 = in[1] ^ ks[1];
+  u32 s2 = in[2] ^ ks[2];
+  u32 s3 = in[3] ^ ks[3];
+
+  u32 t0;
+  u32 t1;
+  u32 t2;
+  u32 t3;
+
+  t0 = s_te0[s0 >> 24] ^ s_te1[(s1 >> 16) & 0xff] ^ s_te2[(s2 >>  8) & 0xff] ^ s_te3[s3 & 0xff] ^ ks[ 4];
+  t1 = s_te0[s1 >> 24] ^ s_te1[(s2 >> 16) & 0xff] ^ s_te2[(s3 >>  8) & 0xff] ^ s_te3[s0 & 0xff] ^ ks[ 5];
+  t2 = s_te0[s2 >> 24] ^ s_te1[(s3 >> 16) & 0xff] ^ s_te2[(s0 >>  8) & 0xff] ^ s_te3[s1 & 0xff] ^ ks[ 6];
+  t3 = s_te0[s3 >> 24] ^ s_te1[(s0 >> 16) & 0xff] ^ s_te2[(s1 >>  8) & 0xff] ^ s_te3[s2 & 0xff] ^ ks[ 7];
+  s0 = s_te0[t0 >> 24] ^ s_te1[(t1 >> 16) & 0xff] ^ s_te2[(t2 >>  8) & 0xff] ^ s_te3[t3 & 0xff] ^ ks[ 8];
+  s1 = s_te0[t1 >> 24] ^ s_te1[(t2 >> 16) & 0xff] ^ s_te2[(t3 >>  8) & 0xff] ^ s_te3[t0 & 0xff] ^ ks[ 9];
+  s2 = s_te0[t2 >> 24] ^ s_te1[(t3 >> 16) & 0xff] ^ s_te2[(t0 >>  8) & 0xff] ^ s_te3[t1 & 0xff] ^ ks[10];
+  s3 = s_te0[t3 >> 24] ^ s_te1[(t0 >> 16) & 0xff] ^ s_te2[(t1 >>  8) & 0xff] ^ s_te3[t2 & 0xff] ^ ks[11];
+  t0 = s_te0[s0 >> 24] ^ s_te1[(s1 >> 16) & 0xff] ^ s_te2[(s2 >>  8) & 0xff] ^ s_te3[s3 & 0xff] ^ ks[12];
+  t1 = s_te0[s1 >> 24] ^ s_te1[(s2 >> 16) & 0xff] ^ s_te2[(s3 >>  8) & 0xff] ^ s_te3[s0 & 0xff] ^ ks[13];
+  t2 = s_te0[s2 >> 24] ^ s_te1[(s3 >> 16) & 0xff] ^ s_te2[(s0 >>  8) & 0xff] ^ s_te3[s1 & 0xff] ^ ks[14];
+  t3 = s_te0[s3 >> 24] ^ s_te1[(s0 >> 16) & 0xff] ^ s_te2[(s1 >>  8) & 0xff] ^ s_te3[s2 & 0xff] ^ ks[15];
+  s0 = s_te0[t0 >> 24] ^ s_te1[(t1 >> 16) & 0xff] ^ s_te2[(t2 >>  8) & 0xff] ^ s_te3[t3 & 0xff] ^ ks[16];
+  s1 = s_te0[t1 >> 24] ^ s_te1[(t2 >> 16) & 0xff] ^ s_te2[(t3 >>  8) & 0xff] ^ s_te3[t0 & 0xff] ^ ks[17];
+  s2 = s_te0[t2 >> 24] ^ s_te1[(t3 >> 16) & 0xff] ^ s_te2[(t0 >>  8) & 0xff] ^ s_te3[t1 & 0xff] ^ ks[18];
+  s3 = s_te0[t3 >> 24] ^ s_te1[(t0 >> 16) & 0xff] ^ s_te2[(t1 >>  8) & 0xff] ^ s_te3[t2 & 0xff] ^ ks[19];
+  t0 = s_te0[s0 >> 24] ^ s_te1[(s1 >> 16) & 0xff] ^ s_te2[(s2 >>  8) & 0xff] ^ s_te3[s3 & 0xff] ^ ks[20];
+  t1 = s_te0[s1 >> 24] ^ s_te1[(s2 >> 16) & 0xff] ^ s_te2[(s3 >>  8) & 0xff] ^ s_te3[s0 & 0xff] ^ ks[21];
+  t2 = s_te0[s2 >> 24] ^ s_te1[(s3 >> 16) & 0xff] ^ s_te2[(s0 >>  8) & 0xff] ^ s_te3[s1 & 0xff] ^ ks[22];
+  t3 = s_te0[s3 >> 24] ^ s_te1[(s0 >> 16) & 0xff] ^ s_te2[(s1 >>  8) & 0xff] ^ s_te3[s2 & 0xff] ^ ks[23];
+  s0 = s_te0[t0 >> 24] ^ s_te1[(t1 >> 16) & 0xff] ^ s_te2[(t2 >>  8) & 0xff] ^ s_te3[t3 & 0xff] ^ ks[24];
+  s1 = s_te0[t1 >> 24] ^ s_te1[(t2 >> 16) & 0xff] ^ s_te2[(t3 >>  8) & 0xff] ^ s_te3[t0 & 0xff] ^ ks[25];
+  s2 = s_te0[t2 >> 24] ^ s_te1[(t3 >> 16) & 0xff] ^ s_te2[(t0 >>  8) & 0xff] ^ s_te3[t1 & 0xff] ^ ks[26];
+  s3 = s_te0[t3 >> 24] ^ s_te1[(t0 >> 16) & 0xff] ^ s_te2[(t1 >>  8) & 0xff] ^ s_te3[t2 & 0xff] ^ ks[27];
+  t0 = s_te0[s0 >> 24] ^ s_te1[(s1 >> 16) & 0xff] ^ s_te2[(s2 >>  8) & 0xff] ^ s_te3[s3 & 0xff] ^ ks[28];
+  t1 = s_te0[s1 >> 24] ^ s_te1[(s2 >> 16) & 0xff] ^ s_te2[(s3 >>  8) & 0xff] ^ s_te3[s0 & 0xff] ^ ks[29];
+  t2 = s_te0[s2 >> 24] ^ s_te1[(s3 >> 16) & 0xff] ^ s_te2[(s0 >>  8) & 0xff] ^ s_te3[s1 & 0xff] ^ ks[30];
+  t3 = s_te0[s3 >> 24] ^ s_te1[(s0 >> 16) & 0xff] ^ s_te2[(s1 >>  8) & 0xff] ^ s_te3[s2 & 0xff] ^ ks[31];
+  s0 = s_te0[t0 >> 24] ^ s_te1[(t1 >> 16) & 0xff] ^ s_te2[(t2 >>  8) & 0xff] ^ s_te3[t3 & 0xff] ^ ks[32];
+  s1 = s_te0[t1 >> 24] ^ s_te1[(t2 >> 16) & 0xff] ^ s_te2[(t3 >>  8) & 0xff] ^ s_te3[t0 & 0xff] ^ ks[33];
+  s2 = s_te0[t2 >> 24] ^ s_te1[(t3 >> 16) & 0xff] ^ s_te2[(t0 >>  8) & 0xff] ^ s_te3[t1 & 0xff] ^ ks[34];
+  s3 = s_te0[t3 >> 24] ^ s_te1[(t0 >> 16) & 0xff] ^ s_te2[(t1 >>  8) & 0xff] ^ s_te3[t2 & 0xff] ^ ks[35];
+  t0 = s_te0[s0 >> 24] ^ s_te1[(s1 >> 16) & 0xff] ^ s_te2[(s2 >>  8) & 0xff] ^ s_te3[s3 & 0xff] ^ ks[36];
+  t1 = s_te0[s1 >> 24] ^ s_te1[(s2 >> 16) & 0xff] ^ s_te2[(s3 >>  8) & 0xff] ^ s_te3[s0 & 0xff] ^ ks[37];
+  t2 = s_te0[s2 >> 24] ^ s_te1[(s3 >> 16) & 0xff] ^ s_te2[(s0 >>  8) & 0xff] ^ s_te3[s1 & 0xff] ^ ks[38];
+  t3 = s_te0[s3 >> 24] ^ s_te1[(s0 >> 16) & 0xff] ^ s_te2[(s1 >>  8) & 0xff] ^ s_te3[s2 & 0xff] ^ ks[39];
+  s0 = s_te0[t0 >> 24] ^ s_te1[(t1 >> 16) & 0xff] ^ s_te2[(t2 >>  8) & 0xff] ^ s_te3[t3 & 0xff] ^ ks[40];
+  s1 = s_te0[t1 >> 24] ^ s_te1[(t2 >> 16) & 0xff] ^ s_te2[(t3 >>  8) & 0xff] ^ s_te3[t0 & 0xff] ^ ks[41];
+  s2 = s_te0[t2 >> 24] ^ s_te1[(t3 >> 16) & 0xff] ^ s_te2[(t0 >>  8) & 0xff] ^ s_te3[t1 & 0xff] ^ ks[42];
+  s3 = s_te0[t3 >> 24] ^ s_te1[(t0 >> 16) & 0xff] ^ s_te2[(t1 >>  8) & 0xff] ^ s_te3[t2 & 0xff] ^ ks[43];
+  t0 = s_te0[s0 >> 24] ^ s_te1[(s1 >> 16) & 0xff] ^ s_te2[(s2 >>  8) & 0xff] ^ s_te3[s3 & 0xff] ^ ks[44];
+  t1 = s_te0[s1 >> 24] ^ s_te1[(s2 >> 16) & 0xff] ^ s_te2[(s3 >>  8) & 0xff] ^ s_te3[s0 & 0xff] ^ ks[45];
+  t2 = s_te0[s2 >> 24] ^ s_te1[(s3 >> 16) & 0xff] ^ s_te2[(s0 >>  8) & 0xff] ^ s_te3[s1 & 0xff] ^ ks[46];
+  t3 = s_te0[s3 >> 24] ^ s_te1[(s0 >> 16) & 0xff] ^ s_te2[(s1 >>  8) & 0xff] ^ s_te3[s2 & 0xff] ^ ks[47];
+  s0 = s_te0[t0 >> 24] ^ s_te1[(t1 >> 16) & 0xff] ^ s_te2[(t2 >>  8) & 0xff] ^ s_te3[t3 & 0xff] ^ ks[48];
+  s1 = s_te0[t1 >> 24] ^ s_te1[(t2 >> 16) & 0xff] ^ s_te2[(t3 >>  8) & 0xff] ^ s_te3[t0 & 0xff] ^ ks[49];
+  s2 = s_te0[t2 >> 24] ^ s_te1[(t3 >> 16) & 0xff] ^ s_te2[(t0 >>  8) & 0xff] ^ s_te3[t1 & 0xff] ^ ks[50];
+  s3 = s_te0[t3 >> 24] ^ s_te1[(t0 >> 16) & 0xff] ^ s_te2[(t1 >>  8) & 0xff] ^ s_te3[t2 & 0xff] ^ ks[51];
+  t0 = s_te0[s0 >> 24] ^ s_te1[(s1 >> 16) & 0xff] ^ s_te2[(s2 >>  8) & 0xff] ^ s_te3[s3 & 0xff] ^ ks[52];
+  t1 = s_te0[s1 >> 24] ^ s_te1[(s2 >> 16) & 0xff] ^ s_te2[(s3 >>  8) & 0xff] ^ s_te3[s0 & 0xff] ^ ks[53];
+  t2 = s_te0[s2 >> 24] ^ s_te1[(s3 >> 16) & 0xff] ^ s_te2[(s0 >>  8) & 0xff] ^ s_te3[s1 & 0xff] ^ ks[54];
+  t3 = s_te0[s3 >> 24] ^ s_te1[(s0 >> 16) & 0xff] ^ s_te2[(s1 >>  8) & 0xff] ^ s_te3[s2 & 0xff] ^ ks[55];
+
+  out[0] = (s_te4[(t0 >> 24) & 0xff] & 0xff000000)
+         ^ (s_te4[(t1 >> 16) & 0xff] & 0x00ff0000)
+         ^ (s_te4[(t2 >>  8) & 0xff] & 0x0000ff00)
+         ^ (s_te4[(t3 >>  0) & 0xff] & 0x000000ff)
+         ^ ks[56];
+
+  out[1] = (s_te4[(t1 >> 24) & 0xff] & 0xff000000)
+         ^ (s_te4[(t2 >> 16) & 0xff] & 0x00ff0000)
+         ^ (s_te4[(t3 >>  8) & 0xff] & 0x0000ff00)
+         ^ (s_te4[(t0 >>  0) & 0xff] & 0x000000ff)
+         ^ ks[57];
+
+  out[2] = (s_te4[(t2 >> 24) & 0xff] & 0xff000000)
+         ^ (s_te4[(t3 >> 16) & 0xff] & 0x00ff0000)
+         ^ (s_te4[(t0 >>  8) & 0xff] & 0x0000ff00)
+         ^ (s_te4[(t1 >>  0) & 0xff] & 0x000000ff)
+         ^ ks[58];
+
+  out[3] = (s_te4[(t3 >> 24) & 0xff] & 0xff000000)
+         ^ (s_te4[(t0 >> 16) & 0xff] & 0x00ff0000)
+         ^ (s_te4[(t1 >>  8) & 0xff] & 0x0000ff00)
+         ^ (s_te4[(t2 >>  0) & 0xff] & 0x000000ff)
+         ^ ks[59];
+}
+
 KERNEL_FQ KERNEL_FA void m13400_init (KERN_ATTR_TMPS_ESALT (keepass_tmp_t, keepass_t))
 {
   /**
@@ -227,29 +317,29 @@ KERNEL_FQ KERNEL_FA void m13400_loop (KERN_ATTR_TMPS_ESALT (keepass_tmp_t, keepa
   u32 data0[4];
   u32 data1[4];
 
-  data0[0] = tmps[gid].tmp_digest[0];
-  data0[1] = tmps[gid].tmp_digest[1];
-  data0[2] = tmps[gid].tmp_digest[2];
-  data0[3] = tmps[gid].tmp_digest[3];
-  data1[0] = tmps[gid].tmp_digest[4];
-  data1[1] = tmps[gid].tmp_digest[5];
-  data1[2] = tmps[gid].tmp_digest[6];
-  data1[3] = tmps[gid].tmp_digest[7];
+  data0[0] = hc_swap32_S (tmps[gid].tmp_digest[0]);
+  data0[1] = hc_swap32_S (tmps[gid].tmp_digest[1]);
+  data0[2] = hc_swap32_S (tmps[gid].tmp_digest[2]);
+  data0[3] = hc_swap32_S (tmps[gid].tmp_digest[3]);
+  data1[0] = hc_swap32_S (tmps[gid].tmp_digest[4]);
+  data1[1] = hc_swap32_S (tmps[gid].tmp_digest[5]);
+  data1[2] = hc_swap32_S (tmps[gid].tmp_digest[6]);
+  data1[3] = hc_swap32_S (tmps[gid].tmp_digest[7]);
 
   for (u32 i = 0; i < LOOP_CNT; i++)
   {
-    AES256_encrypt (ks, data0, data0, s_te0, s_te1, s_te2, s_te3, s_te4);
-    AES256_encrypt (ks, data1, data1, s_te0, s_te1, s_te2, s_te3, s_te4);
+    m13400_aes256_encrypt_noswap (ks, data0, data0, s_te0, s_te1, s_te2, s_te3, s_te4);
+    m13400_aes256_encrypt_noswap (ks, data1, data1, s_te0, s_te1, s_te2, s_te3, s_te4);
   }
 
-  tmps[gid].tmp_digest[0] = data0[0];
-  tmps[gid].tmp_digest[1] = data0[1];
-  tmps[gid].tmp_digest[2] = data0[2];
-  tmps[gid].tmp_digest[3] = data0[3];
-  tmps[gid].tmp_digest[4] = data1[0];
-  tmps[gid].tmp_digest[5] = data1[1];
-  tmps[gid].tmp_digest[6] = data1[2];
-  tmps[gid].tmp_digest[7] = data1[3];
+  tmps[gid].tmp_digest[0] = hc_swap32_S (data0[0]);
+  tmps[gid].tmp_digest[1] = hc_swap32_S (data0[1]);
+  tmps[gid].tmp_digest[2] = hc_swap32_S (data0[2]);
+  tmps[gid].tmp_digest[3] = hc_swap32_S (data0[3]);
+  tmps[gid].tmp_digest[4] = hc_swap32_S (data1[0]);
+  tmps[gid].tmp_digest[5] = hc_swap32_S (data1[1]);
+  tmps[gid].tmp_digest[6] = hc_swap32_S (data1[2]);
+  tmps[gid].tmp_digest[7] = hc_swap32_S (data1[3]);
 }
 
 KERNEL_FQ KERNEL_FA void m13400_comp (KERN_ATTR_TMPS_ESALT (keepass_tmp_t, keepass_t))
