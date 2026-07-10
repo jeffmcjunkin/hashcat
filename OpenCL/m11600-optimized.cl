@@ -77,6 +77,7 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
   pw_buf[4] = pws[gid].i[4];
 
   const u32 pw_len = MIN (pws[gid].pw_len, 20);
+  const u32 iter64 = (pw_len * 2) + 8;
 
   // this is large enough to hold all possible w[] arrays for 64 iterations
 
@@ -86,7 +87,7 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
 
   PRIVATE_AS u8 *ptr = (PRIVATE_AS u8 *) largeblock;
 
-  for (u32 i = 0; i < LARGEBLOCK_ELEMS; i++) largeblock[i] = 0;
+  for (u32 i = 0; i < iter64 * 16; i++) largeblock[i] = 0;
 
   u32 loop_pos_pos = LOOP_POS;
 
@@ -118,8 +119,6 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
   h[5] = tmps[gid].h[5];
   h[6] = tmps[gid].h[6];
   h[7] = tmps[gid].h[7];
-
-  const int iter64 = (pw_len * 2) + 8;
 
   loop_pos_pos = LOOP_POS;
 
