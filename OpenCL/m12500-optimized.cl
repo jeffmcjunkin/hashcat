@@ -76,13 +76,19 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
 
   const u32 salt_len = 8;
 
+  const u32 p2 = pw_len + salt_len;
+
+  const u32 p3 = p2 + 3;
+
   // this is large enough to hold all possible w[] arrays for 64 iterations
 
   #define LARGEBLOCK_ELEMS ((40 + 8 + 3) * 16)
 
   u32 largeblock[LARGEBLOCK_ELEMS];
 
-  for (u32 i = 0; i < LARGEBLOCK_ELEMS; i++) largeblock[i] = 0;
+  const u32 largeblock_elems = p3 * 16;
+
+  for (u32 i = 0; i < largeblock_elems; i++) largeblock[i] = 0;
 
   for (u32 i = 0, p = 0; i < 64; i++)
   {
@@ -100,10 +106,6 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
 
     p += 3;
   }
-
-  const u32 p2 = pw_len + salt_len;
-
-  const u32 p3 = pw_len + salt_len + 3;
 
   const u32 init_pos = LOOP_POS / (ROUNDS / 16);
 
