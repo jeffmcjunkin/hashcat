@@ -48,17 +48,12 @@ CONSTANT_VK u32a c_ascii_to_ebcdic_pc[256] =
 #define BOX1(i,S) make_u32x ((S)[(i).s0], (S)[(i).s1], (S)[(i).s2], (S)[(i).s3], (S)[(i).s4], (S)[(i).s5], (S)[(i).s6], (S)[(i).s7], (S)[(i).s8], (S)[(i).s9], (S)[(i).sa], (S)[(i).sb], (S)[(i).sc], (S)[(i).sd], (S)[(i).se], (S)[(i).sf])
 #endif
 
-DECLSPEC void transform_racf_key (const u32x w0, const u32x w1, PRIVATE_AS u32x *key)
+DECLSPEC u32x transform_racf_word (const u32x w)
 {
-  key[0] = BOX1 (((w0 >>  0) & 0xff), c_ascii_to_ebcdic_pc) <<  0
-         | BOX1 (((w0 >>  8) & 0xff), c_ascii_to_ebcdic_pc) <<  8
-         | BOX1 (((w0 >> 16) & 0xff), c_ascii_to_ebcdic_pc) << 16
-         | BOX1 (((w0 >> 24) & 0xff), c_ascii_to_ebcdic_pc) << 24;
-
-  key[1] = BOX1 (((w1 >>  0) & 0xff), c_ascii_to_ebcdic_pc) <<  0
-         | BOX1 (((w1 >>  8) & 0xff), c_ascii_to_ebcdic_pc) <<  8
-         | BOX1 (((w1 >> 16) & 0xff), c_ascii_to_ebcdic_pc) << 16
-         | BOX1 (((w1 >> 24) & 0xff), c_ascii_to_ebcdic_pc) << 24;
+  return BOX1 (((w >>  0) & 0xff), c_ascii_to_ebcdic_pc) <<  0
+       | BOX1 (((w >>  8) & 0xff), c_ascii_to_ebcdic_pc) <<  8
+       | BOX1 (((w >> 16) & 0xff), c_ascii_to_ebcdic_pc) << 16
+       | BOX1 (((w >> 24) & 0xff), c_ascii_to_ebcdic_pc) << 24;
 }
 
 DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64], PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTOR ())
@@ -71,10 +66,10 @@ DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
    * salt
    */
 
-  u32 salt_buf0[2];
+  u32x data[2];
 
-  salt_buf0[0] = salt_bufs[SALT_POS_HOST].salt_buf_pc[0];
-  salt_buf0[1] = salt_bufs[SALT_POS_HOST].salt_buf_pc[1];
+  data[0] = salt_bufs[SALT_POS_HOST].salt_buf_pc[0];
+  data[1] = salt_bufs[SALT_POS_HOST].salt_buf_pc[1];
 
   /**
    * loop
@@ -94,22 +89,13 @@ DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
      * RACF
      */
 
-    u32x key[2];
-
-    transform_racf_key (w0, w1, key);
-
-    const u32x c = key[0];
-    const u32x d = key[1];
+    const u32x c = transform_racf_word (w0);
+    const u32x d = transform_racf_word (w1);
 
     u32x Kc[16];
     u32x Kd[16];
 
     _des_crypt_keysetup_vect (c, d, Kc, Kd, s_skb);
-
-    u32x data[2];
-
-    data[0] = salt_buf0[0];
-    data[1] = salt_buf0[1];
 
     u32x iv[2];
 
@@ -131,10 +117,10 @@ DECLSPEC void m08500s (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
    * salt
    */
 
-  u32 salt_buf0[2];
+  u32x data[2];
 
-  salt_buf0[0] = salt_bufs[SALT_POS_HOST].salt_buf_pc[0];
-  salt_buf0[1] = salt_bufs[SALT_POS_HOST].salt_buf_pc[1];
+  data[0] = salt_bufs[SALT_POS_HOST].salt_buf_pc[0];
+  data[1] = salt_bufs[SALT_POS_HOST].salt_buf_pc[1];
 
   /**
    * digest
@@ -166,22 +152,13 @@ DECLSPEC void m08500s (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
      * RACF
      */
 
-    u32x key[2];
-
-    transform_racf_key (w0, w1, key);
-
-    const u32x c = key[0];
-    const u32x d = key[1];
+    const u32x c = transform_racf_word (w0);
+    const u32x d = transform_racf_word (w1);
 
     u32x Kc[16];
     u32x Kd[16];
 
     _des_crypt_keysetup_vect (c, d, Kc, Kd, s_skb);
-
-    u32x data[2];
-
-    data[0] = salt_buf0[0];
-    data[1] = salt_buf0[1];
 
     u32x iv[2];
 
