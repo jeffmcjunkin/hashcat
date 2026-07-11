@@ -310,6 +310,24 @@ CONSTANT_VK u8 c_bcrypt_base64_alphabet[64] =
 
 // access pattern: minimize bank ID based on thread ID but thread ID is not saved from computation
 
+#ifdef BCRYPT_KEY32_PREBIASED_LID
+
+#define KEY32(key) ((key) * FIXED_LOCAL_SIZE)
+
+DECLSPEC u32 GET_KEY32 (LOCAL_AS u32 *S, const u64 key)
+{
+  return S[KEY32 (key)];
+}
+
+DECLSPEC void SET_KEY32 (LOCAL_AS u32 *S, const u64 key, const u32 val)
+{
+  S[KEY32 (key)] = val;
+}
+
+#undef KEY32
+
+#else
+
 #define KEY32(lid,key) (((key) * FIXED_LOCAL_SIZE) + (lid))
 
 DECLSPEC u32 GET_KEY32 (LOCAL_AS u32 *S, const u64 key)
@@ -327,6 +345,8 @@ DECLSPEC void SET_KEY32 (LOCAL_AS u32 *S, const u64 key, const u32 val)
 }
 
 #undef KEY32
+
+#endif
 
 #else
 

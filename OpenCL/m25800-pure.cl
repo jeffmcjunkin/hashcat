@@ -8,6 +8,7 @@
 #include M2S(INCLUDE_PATH/inc_types.h)
 #include M2S(INCLUDE_PATH/inc_platform.cl)
 #include M2S(INCLUDE_PATH/inc_common.cl)
+#define BCRYPT_KEY32_PREBIASED_LID
 #include M2S(INCLUDE_PATH/inc_cipher_blowfish.cl)
 #include M2S(INCLUDE_PATH/inc_hash_sha1.cl)
 #endif
@@ -143,10 +144,10 @@ KERNEL_FQ KERNEL_FA void m25800_init (KERN_ATTR_TMPS (bcrypt_tmp_t))
   #endif
 
   #ifdef BCRYPT_AVOID_BANK_CONFLICTS
-  LOCAL_AS u32 *S0 = S + (FIXED_LOCAL_SIZE * 256 * 0);
-  LOCAL_AS u32 *S1 = S + (FIXED_LOCAL_SIZE * 256 * 1);
-  LOCAL_AS u32 *S2 = S + (FIXED_LOCAL_SIZE * 256 * 2);
-  LOCAL_AS u32 *S3 = S + (FIXED_LOCAL_SIZE * 256 * 3);
+  LOCAL_AS u32 *S0 = S + (FIXED_LOCAL_SIZE * 256 * 0) + lid;
+  LOCAL_AS u32 *S1 = S + (FIXED_LOCAL_SIZE * 256 * 1) + lid;
+  LOCAL_AS u32 *S2 = S + (FIXED_LOCAL_SIZE * 256 * 2) + lid;
+  LOCAL_AS u32 *S3 = S + (FIXED_LOCAL_SIZE * 256 * 3) + lid;
   #else
   LOCAL_AS u32 *S0 = S0_all[lid];
   LOCAL_AS u32 *S1 = S1_all[lid];
@@ -208,10 +209,10 @@ KERNEL_FQ KERNEL_FA void m25800_loop (KERN_ATTR_TMPS (bcrypt_tmp_t))
   #endif
 
   #ifdef BCRYPT_AVOID_BANK_CONFLICTS
-  LOCAL_AS u32 *S0 = S + (FIXED_LOCAL_SIZE * 256 * 0);
-  LOCAL_AS u32 *S1 = S + (FIXED_LOCAL_SIZE * 256 * 1);
-  LOCAL_AS u32 *S2 = S + (FIXED_LOCAL_SIZE * 256 * 2);
-  LOCAL_AS u32 *S3 = S + (FIXED_LOCAL_SIZE * 256 * 3);
+  LOCAL_AS u32 *S0 = S + (FIXED_LOCAL_SIZE * 256 * 0) + lid;
+  LOCAL_AS u32 *S1 = S + (FIXED_LOCAL_SIZE * 256 * 1) + lid;
+  LOCAL_AS u32 *S2 = S + (FIXED_LOCAL_SIZE * 256 * 2) + lid;
+  LOCAL_AS u32 *S3 = S + (FIXED_LOCAL_SIZE * 256 * 3) + lid;
   #else
   LOCAL_AS u32 *S0 = S0_all[lid];
   LOCAL_AS u32 *S1 = S1_all[lid];
@@ -322,10 +323,10 @@ KERNEL_FQ KERNEL_FA void m25800_comp (KERN_ATTR_TMPS (bcrypt_tmp_t))
   #endif
 
   #ifdef BCRYPT_AVOID_BANK_CONFLICTS
-  LOCAL_AS u32 *S0 = S + (FIXED_LOCAL_SIZE * 256 * 0);
-  LOCAL_AS u32 *S1 = S + (FIXED_LOCAL_SIZE * 256 * 1);
-  LOCAL_AS u32 *S2 = S + (FIXED_LOCAL_SIZE * 256 * 2);
-  LOCAL_AS u32 *S3 = S + (FIXED_LOCAL_SIZE * 256 * 3);
+  LOCAL_AS u32 *S0 = S + (FIXED_LOCAL_SIZE * 256 * 0) + lid;
+  LOCAL_AS u32 *S1 = S + (FIXED_LOCAL_SIZE * 256 * 1) + lid;
+  LOCAL_AS u32 *S2 = S + (FIXED_LOCAL_SIZE * 256 * 2) + lid;
+  LOCAL_AS u32 *S3 = S + (FIXED_LOCAL_SIZE * 256 * 3) + lid;
   #else
   LOCAL_AS u32 *S0 = S0_all[lid];
   LOCAL_AS u32 *S1 = S1_all[lid];
