@@ -558,6 +558,44 @@ CONSTANT_VK u64a MT7[256] =
 // input buf needs to be in algorithm native byte order (md5 = LE, sha256 = BE, etc)
 // input buf needs to be 64 byte aligned when using whirlpool_update()
 
+#ifdef REAL_SHM
+#define WHIRLPOOL_MT0_S(i) BOX64_S (s_MT0, (i))
+#define WHIRLPOOL_MT1_S(i) hc_rotr64_S (BOX64_S (s_MT0, (i)),  8)
+#define WHIRLPOOL_MT2_S(i) hc_rotr64_S (BOX64_S (s_MT0, (i)), 16)
+#define WHIRLPOOL_MT3_S(i) hc_rotr64_S (BOX64_S (s_MT0, (i)), 24)
+#define WHIRLPOOL_MT4_S(i) hc_rotr64_S (BOX64_S (s_MT0, (i)), 32)
+#define WHIRLPOOL_MT5_S(i) hc_rotr64_S (BOX64_S (s_MT0, (i)), 40)
+#define WHIRLPOOL_MT6_S(i) hc_rotr64_S (BOX64_S (s_MT0, (i)), 48)
+#define WHIRLPOOL_MT7_S(i) hc_rotr64_S (BOX64_S (s_MT0, (i)), 56)
+
+#define WHIRLPOOL_MT0(i) BOX64 (s_MT0, (i))
+#define WHIRLPOOL_MT1(i) hc_rotr64 (BOX64 (s_MT0, (i)),  8)
+#define WHIRLPOOL_MT2(i) hc_rotr64 (BOX64 (s_MT0, (i)), 16)
+#define WHIRLPOOL_MT3(i) hc_rotr64 (BOX64 (s_MT0, (i)), 24)
+#define WHIRLPOOL_MT4(i) hc_rotr64 (BOX64 (s_MT0, (i)), 32)
+#define WHIRLPOOL_MT5(i) hc_rotr64 (BOX64 (s_MT0, (i)), 40)
+#define WHIRLPOOL_MT6(i) hc_rotr64 (BOX64 (s_MT0, (i)), 48)
+#define WHIRLPOOL_MT7(i) hc_rotr64 (BOX64 (s_MT0, (i)), 56)
+#else
+#define WHIRLPOOL_MT0_S(i) BOX64_S (s_MT0, (i))
+#define WHIRLPOOL_MT1_S(i) BOX64_S (s_MT1, (i))
+#define WHIRLPOOL_MT2_S(i) BOX64_S (s_MT2, (i))
+#define WHIRLPOOL_MT3_S(i) BOX64_S (s_MT3, (i))
+#define WHIRLPOOL_MT4_S(i) BOX64_S (s_MT4, (i))
+#define WHIRLPOOL_MT5_S(i) BOX64_S (s_MT5, (i))
+#define WHIRLPOOL_MT6_S(i) BOX64_S (s_MT6, (i))
+#define WHIRLPOOL_MT7_S(i) BOX64_S (s_MT7, (i))
+
+#define WHIRLPOOL_MT0(i) BOX64 (s_MT0, (i))
+#define WHIRLPOOL_MT1(i) BOX64 (s_MT1, (i))
+#define WHIRLPOOL_MT2(i) BOX64 (s_MT2, (i))
+#define WHIRLPOOL_MT3(i) BOX64 (s_MT3, (i))
+#define WHIRLPOOL_MT4(i) BOX64 (s_MT4, (i))
+#define WHIRLPOOL_MT5(i) BOX64 (s_MT5, (i))
+#define WHIRLPOOL_MT6(i) BOX64 (s_MT6, (i))
+#define WHIRLPOOL_MT7(i) BOX64 (s_MT7, (i))
+#endif
+
 #define F1(l,v0,v1,v2,v3,v4,v5,v6,v7)     \
 {                                         \
   const u8 Lp0 = v8h_from_v64_S ((v0));   \
@@ -569,14 +607,14 @@ CONSTANT_VK u64a MT7[256] =
   const u8 Lp6 = v8b_from_v64_S ((v6));   \
   const u8 Lp7 = v8a_from_v64_S ((v7));   \
                                           \
-  const u64 X0 = BOX64_S (s_MT0, Lp0);  \
-  const u64 X1 = BOX64_S (s_MT1, Lp1);  \
-  const u64 X2 = BOX64_S (s_MT2, Lp2);  \
-  const u64 X3 = BOX64_S (s_MT3, Lp3);  \
-  const u64 X4 = BOX64_S (s_MT4, Lp4);  \
-  const u64 X5 = BOX64_S (s_MT5, Lp5);  \
-  const u64 X6 = BOX64_S (s_MT6, Lp6);  \
-  const u64 X7 = BOX64_S (s_MT7, Lp7);  \
+  const u64 X0 = WHIRLPOOL_MT0_S (Lp0);  \
+  const u64 X1 = WHIRLPOOL_MT1_S (Lp1);  \
+  const u64 X2 = WHIRLPOOL_MT2_S (Lp2);  \
+  const u64 X3 = WHIRLPOOL_MT3_S (Lp3);  \
+  const u64 X4 = WHIRLPOOL_MT4_S (Lp4);  \
+  const u64 X5 = WHIRLPOOL_MT5_S (Lp5);  \
+  const u64 X6 = WHIRLPOOL_MT6_S (Lp6);  \
+  const u64 X7 = WHIRLPOOL_MT7_S (Lp7);  \
                                           \
   (l) = X0                                \
       ^ X1                                \
@@ -1952,14 +1990,14 @@ DECLSPEC void whirlpool_hmac_final (PRIVATE_AS whirlpool_hmac_ctx_t *ctx)
   const u8x Lp6 = v8b_from_v64 ((v6));    \
   const u8x Lp7 = v8a_from_v64 ((v7));    \
                                           \
-  const u64x X0 = BOX64 (s_MT0, Lp0);    \
-  const u64x X1 = BOX64 (s_MT1, Lp1);    \
-  const u64x X2 = BOX64 (s_MT2, Lp2);    \
-  const u64x X3 = BOX64 (s_MT3, Lp3);    \
-  const u64x X4 = BOX64 (s_MT4, Lp4);    \
-  const u64x X5 = BOX64 (s_MT5, Lp5);    \
-  const u64x X6 = BOX64 (s_MT6, Lp6);    \
-  const u64x X7 = BOX64 (s_MT7, Lp7);    \
+  const u64x X0 = WHIRLPOOL_MT0 (Lp0);    \
+  const u64x X1 = WHIRLPOOL_MT1 (Lp1);    \
+  const u64x X2 = WHIRLPOOL_MT2 (Lp2);    \
+  const u64x X3 = WHIRLPOOL_MT3 (Lp3);    \
+  const u64x X4 = WHIRLPOOL_MT4 (Lp4);    \
+  const u64x X5 = WHIRLPOOL_MT5 (Lp5);    \
+  const u64x X6 = WHIRLPOOL_MT6 (Lp6);    \
+  const u64x X7 = WHIRLPOOL_MT7 (Lp7);    \
                                           \
   (l) = X0                                \
       ^ X1                                \
@@ -2777,6 +2815,22 @@ DECLSPEC void whirlpool_hmac_final_vector (PRIVATE_AS whirlpool_hmac_ctx_vector_
 #undef R
 #undef BOX
 #undef BOX_S
+#undef WHIRLPOOL_MT0_S
+#undef WHIRLPOOL_MT1_S
+#undef WHIRLPOOL_MT2_S
+#undef WHIRLPOOL_MT3_S
+#undef WHIRLPOOL_MT4_S
+#undef WHIRLPOOL_MT5_S
+#undef WHIRLPOOL_MT6_S
+#undef WHIRLPOOL_MT7_S
+#undef WHIRLPOOL_MT0
+#undef WHIRLPOOL_MT1
+#undef WHIRLPOOL_MT2
+#undef WHIRLPOOL_MT3
+#undef WHIRLPOOL_MT4
+#undef WHIRLPOOL_MT5
+#undef WHIRLPOOL_MT6
+#undef WHIRLPOOL_MT7
 #undef F0
 #undef F0x
 #undef F1
