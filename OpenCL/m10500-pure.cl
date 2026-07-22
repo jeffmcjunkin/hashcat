@@ -45,7 +45,7 @@ typedef struct pdf14_tmp
 
 } pdf14_tmp_t;
 
-DECLSPEC void rc4_next_8_m10500 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *in, PRIVATE_AS u32 *out, const u64 lid)
+DECLSPEC void rc4_next_8_m10500 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *in, PRIVATE_AS u32 *out, const u32 lid)
 {
   u8 a = 0;
   u8 b = 0;
@@ -301,7 +301,7 @@ KERNEL_FQ KERNEL_FA void m10500_loop (KERN_ATTR_TMPS_ESALT (pdf14_tmp_t, pdf_t))
    */
 
   const u64 gid = get_global_id (0);
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
 
   if (gid >= GID_CNT) return;
 
