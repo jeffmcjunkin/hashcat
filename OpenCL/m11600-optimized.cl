@@ -77,21 +77,22 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
   pw_buf[4] = pws[gid].i[4];
 
   const u32 pw_len = MIN (pws[gid].pw_len, 20);
-  const u32 iter64 = (pw_len * 2) + 8;
+  const u32 iter_len = (pw_len * 2) + 8;
+  const u32 iter32   = iter_len / 2;
 
-  // this is large enough to hold all possible w[] arrays for 64 iterations
+  // this is large enough to hold all possible w[] arrays for 32 iterations
 
-  #define LARGEBLOCK_ELEMS ((40 + 8) * 16)
+  #define LARGEBLOCK_ELEMS ((20 + 4) * 16)
 
   u32 largeblock[LARGEBLOCK_ELEMS];
 
   PRIVATE_AS u8 *ptr = (PRIVATE_AS u8 *) largeblock;
 
-  for (u32 i = 0; i < iter64 * 16; i++) largeblock[i] = 0;
+  for (u32 i = 0; i < iter32 * 16; i++) largeblock[i] = 0;
 
   u32 loop_pos_pos = LOOP_POS;
 
-  for (u32 i = 0, p = 0; i < 64; i++)
+  for (u32 i = 0, p = 0; i < 32; i++)
   {
     for (u32 j = 0; j < pw_len; j++, p += 2)
     {
@@ -122,10 +123,10 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
 
   loop_pos_pos = LOOP_POS;
 
-  for (u32 i = 0; i < LOOP_CNT; i += 64)
+  for (u32 i = 0; i < LOOP_CNT; i += 32)
   {
     // iteration set
-    for (u32 i = 0, p = pw_len * 2; i < 64; i++, p += iter64)
+    for (u32 i = 0, p = pw_len * 2; i < 32; i++, p += iter_len)
     {
       const u8 byte0 = unpack_v8a_from_v32_S (loop_pos_pos);
       const u8 byte1 = unpack_v8b_from_v32_S (loop_pos_pos);
@@ -137,7 +138,7 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
     }
 
     // full 64 byte buffer
-    for (int j = 0, j16 = 0; j < iter64; j++, j16 += 16)
+    for (int j = 0, j16 = 0; j < iter32; j++, j16 += 16)
     {
       u32 w0[4];
       u32 w1[4];
@@ -165,7 +166,7 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
     }
   }
 
-  tmps[gid].len += LOOP_CNT * iter64;
+  tmps[gid].len += LOOP_CNT * iter_len;
 
   tmps[gid].h[0] = h[0];
   tmps[gid].h[1] = h[1];
