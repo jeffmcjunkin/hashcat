@@ -129,7 +129,7 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
     {
       const u32 j16 = j * 16;
 
-      u32 w[16 + 1];
+      u32 w[16];
 
       w[ 0] = largeblock[j16 +  0] | tmp;
       w[ 1] = largeblock[j16 +  1];
@@ -147,7 +147,8 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
       w[13] = largeblock[j16 + 13];
       w[14] = largeblock[j16 + 14];
       w[15] = largeblock[j16 + 15];
-      w[16] = 0;
+
+      tmp = 0;
 
       while (k < 64)
       {
@@ -215,7 +216,7 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
                    w[15] = (w[15] & mask1) | tmp1;
                    break;
           case 15: w[15] = (w[15] & mask0) | tmp0;
-                   w[16] =                   tmp1;
+                   tmp   =                   tmp1;
                    break;
         }
 
@@ -227,8 +228,6 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
       sha1_transform (w + 0, w + 4, w + 8, w + 12, dgst);
 
       k &= 63;
-
-      tmp = w[16];
     }
   }
 
