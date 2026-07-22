@@ -126,6 +126,7 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
   for (u32 i = 0; i < LOOP_CNT; i += 32)
   {
     // iteration set
+    #pragma unroll
     for (u32 i = 0, p = pw_len * 2; i < 32; i++, p += iter_len)
     {
       const u8 byte0 = unpack_v8a_from_v32_S (loop_pos_pos);
