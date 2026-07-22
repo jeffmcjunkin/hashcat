@@ -86,10 +86,6 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
 
   u32 largeblock[LARGEBLOCK_ELEMS];
 
-  const u32 largeblock_elems = p3 * 16;
-
-  for (u32 i = 0; i < largeblock_elems; i++) largeblock[i] = 0;
-
   for (u32 i = 0, p = 0; i < 64; i++)
   {
     for (u32 j = 0; j < pw_len; j++, p += 1)
@@ -102,6 +98,8 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
       PUTCHAR_BE (largeblock, p, GETCHAR (salt_buf, j));
     }
 
+    PUTCHAR_BE (largeblock, p + 0, 0);
+    PUTCHAR_BE (largeblock, p + 1, 0);
     PUTCHAR_BE (largeblock, p + 2, (LOOP_POS >> 16) & 0xff);
 
     p += 3;
