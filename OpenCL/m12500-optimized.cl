@@ -152,16 +152,11 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
       {
         const u32 iter_s = hc_swap32_S (iter);
 
-        u32 tmp0 = 0;
-        u32 tmp1 = 0;
-
         const int kd = k / 4;
         const int km = k & 3;
 
-             if (km == 0) { tmp0 = iter_s >>  0; tmp1 = 0;            }
-        else if (km == 1) { tmp0 = iter_s >>  8; tmp1 = 0;            }
-        else if (km == 2) { tmp0 = iter_s >> 16; tmp1 = 0;            }
-        else if (km == 3) { tmp0 = iter_s >> 24; tmp1 = iter_s <<  8; }
+        const u32 tmp0 = iter_s >> (km * 8);
+        const u32 tmp1 = (km == 3) ? iter_s << 8 : 0;
 
         switch (kd)
         {
