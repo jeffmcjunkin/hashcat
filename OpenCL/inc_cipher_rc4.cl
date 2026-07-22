@@ -264,6 +264,7 @@ DECLSPEC void rc4_init_128 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u6
 
   u8 j = 0;
 
+  #pragma unroll 4
   for (u32 i = 0; i < 16; i++)
   {
     u8 idx = i * 16;
