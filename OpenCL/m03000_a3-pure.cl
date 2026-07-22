@@ -1529,8 +1529,10 @@ DECLSPEC void s8 (const u32 a1, const u32 a2, const u32 a3, const u32 a4, const 
 #define KEYSET07 { k00 = K31; k01 = K35; k02 = K52; k03 = K43; k04 = K08; k05 = K37; k06 = K51; k07 = K15; k08 = K49; k09 = K30; k10 = K07; k11 = K02; k12 = K50; k13 = K21; k14 = K45; k15 = K44; k16 = K29; k17 = K16; k18 = K42; k19 = K23; k20 = K22; k21 = K14; k22 = K38; k23 = K01; k24 = K10; k25 = K47; k26 = K53; k27 = K11; k28 = K27; k29 = K26; k30 = K05; k31 = K17; k32 = K54; k33 = K41; k34 = K39; k35 = K20; k36 = K48; k37 = K13; k38 = K24; k39 = K19; k40 = K32; k41 = K40; k42 = K34; k43 = K03; k44 = K06; k45 = K18; k46 = K12; k47 = K46; }
 #define KEYSET17 { k00 = K15; k01 = K51; k02 = K36; k03 = K02; k04 = K49; k05 = K21; k06 = K35; k07 = K31; k08 = K08; k09 = K14; k10 = K23; k11 = K43; k12 = K09; k13 = K37; k14 = K29; k15 = K28; k16 = K45; k17 = K00; k18 = K01; k19 = K07; k20 = K38; k21 = K30; k22 = K22; k23 = K42; k24 = K26; k25 = K04; k26 = K41; k27 = K54; k28 = K39; k29 = K10; k30 = K48; k31 = K33; k32 = K11; k33 = K53; k34 = K27; k35 = K32; k36 = K05; k37 = K25; k38 = K40; k39 = K03; k40 = K20; k41 = K24; k42 = K46; k43 = K19; k44 = K18; k45 = K06; k46 = K55; k47 = K34; }
 
-DECLSPEC void DES (const u32 K00, const u32 K01, const u32 K02, const u32 K03, const u32 K04, const u32 K05, const u32 K06, const u32 K07, const u32 K08, const u32 K09, const u32 K10, const u32 K11, const u32 K12, const u32 K13, const u32 K14, const u32 K15, const u32 K16, const u32 K17, const u32 K18, const u32 K19, const u32 K20, const u32 K21, const u32 K22, const u32 K23, const u32 K24, const u32 K25, const u32 K26, const u32 K27, const u32 K28, const u32 K29, const u32 K30, const u32 K31, const u32 K32, const u32 K33, const u32 K34, const u32 K35, const u32 K36, const u32 K37, const u32 K38, const u32 K39, const u32 K40, const u32 K41, const u32 K42, const u32 K43, const u32 K44, const u32 K45, const u32 K46, const u32 K47, const u32 K48, const u32 K49, const u32 K50, const u32 K51, const u32 K52, const u32 K53, const u32 K54, const u32 K55, PRIVATE_AS u32 *D00, PRIVATE_AS u32 *D01, PRIVATE_AS u32 *D02, PRIVATE_AS u32 *D03, PRIVATE_AS u32 *D04, PRIVATE_AS u32 *D05, PRIVATE_AS u32 *D06, PRIVATE_AS u32 *D07, PRIVATE_AS u32 *D08, PRIVATE_AS u32 *D09, PRIVATE_AS u32 *D10, PRIVATE_AS u32 *D11, PRIVATE_AS u32 *D12, PRIVATE_AS u32 *D13, PRIVATE_AS u32 *D14, PRIVATE_AS u32 *D15, PRIVATE_AS u32 *D16, PRIVATE_AS u32 *D17, PRIVATE_AS u32 *D18, PRIVATE_AS u32 *D19, PRIVATE_AS u32 *D20, PRIVATE_AS u32 *D21, PRIVATE_AS u32 *D22, PRIVATE_AS u32 *D23, PRIVATE_AS u32 *D24, PRIVATE_AS u32 *D25, PRIVATE_AS u32 *D26, PRIVATE_AS u32 *D27, PRIVATE_AS u32 *D28, PRIVATE_AS u32 *D29, PRIVATE_AS u32 *D30, PRIVATE_AS u32 *D31, PRIVATE_AS u32 *D32, PRIVATE_AS u32 *D33, PRIVATE_AS u32 *D34, PRIVATE_AS u32 *D35, PRIVATE_AS u32 *D36, PRIVATE_AS u32 *D37, PRIVATE_AS u32 *D38, PRIVATE_AS u32 *D39, PRIVATE_AS u32 *D40, PRIVATE_AS u32 *D41, PRIVATE_AS u32 *D42, PRIVATE_AS u32 *D43, PRIVATE_AS u32 *D44, PRIVATE_AS u32 *D45, PRIVATE_AS u32 *D46, PRIVATE_AS u32 *D47, PRIVATE_AS u32 *D48, PRIVATE_AS u32 *D49, PRIVATE_AS u32 *D50, PRIVATE_AS u32 *D51, PRIVATE_AS u32 *D52, PRIVATE_AS u32 *D53, PRIVATE_AS u32 *D54, PRIVATE_AS u32 *D55, PRIVATE_AS u32 *D56, PRIVATE_AS u32 *D57, PRIVATE_AS u32 *D58, PRIVATE_AS u32 *D59, PRIVATE_AS u32 *D60, PRIVATE_AS u32 *D61, PRIVATE_AS u32 *D62, PRIVATE_AS u32 *D63)
+DECLSPEC u32 DES (const u32 target, const u32 early_reject, const u32 K00, const u32 K01, const u32 K02, const u32 K03, const u32 K04, const u32 K05, const u32 K06, const u32 K07, const u32 K08, const u32 K09, const u32 K10, const u32 K11, const u32 K12, const u32 K13, const u32 K14, const u32 K15, const u32 K16, const u32 K17, const u32 K18, const u32 K19, const u32 K20, const u32 K21, const u32 K22, const u32 K23, const u32 K24, const u32 K25, const u32 K26, const u32 K27, const u32 K28, const u32 K29, const u32 K30, const u32 K31, const u32 K32, const u32 K33, const u32 K34, const u32 K35, const u32 K36, const u32 K37, const u32 K38, const u32 K39, const u32 K40, const u32 K41, const u32 K42, const u32 K43, const u32 K44, const u32 K45, const u32 K46, const u32 K47, const u32 K48, const u32 K49, const u32 K50, const u32 K51, const u32 K52, const u32 K53, const u32 K54, const u32 K55, PRIVATE_AS u32 *D00, PRIVATE_AS u32 *D01, PRIVATE_AS u32 *D02, PRIVATE_AS u32 *D03, PRIVATE_AS u32 *D04, PRIVATE_AS u32 *D05, PRIVATE_AS u32 *D06, PRIVATE_AS u32 *D07, PRIVATE_AS u32 *D08, PRIVATE_AS u32 *D09, PRIVATE_AS u32 *D10, PRIVATE_AS u32 *D11, PRIVATE_AS u32 *D12, PRIVATE_AS u32 *D13, PRIVATE_AS u32 *D14, PRIVATE_AS u32 *D15, PRIVATE_AS u32 *D16, PRIVATE_AS u32 *D17, PRIVATE_AS u32 *D18, PRIVATE_AS u32 *D19, PRIVATE_AS u32 *D20, PRIVATE_AS u32 *D21, PRIVATE_AS u32 *D22, PRIVATE_AS u32 *D23, PRIVATE_AS u32 *D24, PRIVATE_AS u32 *D25, PRIVATE_AS u32 *D26, PRIVATE_AS u32 *D27, PRIVATE_AS u32 *D28, PRIVATE_AS u32 *D29, PRIVATE_AS u32 *D30, PRIVATE_AS u32 *D31, PRIVATE_AS u32 *D32, PRIVATE_AS u32 *D33, PRIVATE_AS u32 *D34, PRIVATE_AS u32 *D35, PRIVATE_AS u32 *D36, PRIVATE_AS u32 *D37, PRIVATE_AS u32 *D38, PRIVATE_AS u32 *D39, PRIVATE_AS u32 *D40, PRIVATE_AS u32 *D41, PRIVATE_AS u32 *D42, PRIVATE_AS u32 *D43, PRIVATE_AS u32 *D44, PRIVATE_AS u32 *D45, PRIVATE_AS u32 *D46, PRIVATE_AS u32 *D47, PRIVATE_AS u32 *D48, PRIVATE_AS u32 *D49, PRIVATE_AS u32 *D50, PRIVATE_AS u32 *D51, PRIVATE_AS u32 *D52, PRIVATE_AS u32 *D53, PRIVATE_AS u32 *D54, PRIVATE_AS u32 *D55, PRIVATE_AS u32 *D56, PRIVATE_AS u32 *D57, PRIVATE_AS u32 *D58, PRIVATE_AS u32 *D59, PRIVATE_AS u32 *D60, PRIVATE_AS u32 *D61, PRIVATE_AS u32 *D62, PRIVATE_AS u32 *D63)
 {
+  u32 tmpResult = 0;
+
   KXX_DECL u32 k00, k01, k02, k03, k04, k05;
   KXX_DECL u32 k06, k07, k08, k09, k10, k11;
   KXX_DECL u32 k12, k13, k14, k15, k16, k17;
@@ -1620,6 +1622,28 @@ DECLSPEC void DES (const u32 K00, const u32 K01, const u32 K02, const u32 K03, c
     s7(*D55 ^ k36, *D56 ^ k37, *D57 ^ k38, *D58 ^ k39, *D59 ^ k40, *D60 ^ k41, D31, D11, D21, D06);
     s8(*D59 ^ k42, *D60 ^ k43, *D61 ^ k44, *D62 ^ k45, *D63 ^ k46, *D32 ^ k47, D04, D26, D14, D20);
 
+    if (i && early_reject)
+    {
+      tmpResult |= *D00 ^ (((target >>  0) & 1) ? -1 : 0);
+      tmpResult |= *D01 ^ (((target >>  1) & 1) ? -1 : 0);
+      tmpResult |= *D02 ^ (((target >>  2) & 1) ? -1 : 0);
+      tmpResult |= *D03 ^ (((target >>  3) & 1) ? -1 : 0);
+      tmpResult |= *D04 ^ (((target >>  4) & 1) ? -1 : 0);
+      tmpResult |= *D05 ^ (((target >>  5) & 1) ? -1 : 0);
+      tmpResult |= *D06 ^ (((target >>  6) & 1) ? -1 : 0);
+      tmpResult |= *D07 ^ (((target >>  7) & 1) ? -1 : 0);
+      tmpResult |= *D08 ^ (((target >>  8) & 1) ? -1 : 0);
+      tmpResult |= *D09 ^ (((target >>  9) & 1) ? -1 : 0);
+      tmpResult |= *D10 ^ (((target >> 10) & 1) ? -1 : 0);
+      tmpResult |= *D11 ^ (((target >> 11) & 1) ? -1 : 0);
+      tmpResult |= *D12 ^ (((target >> 12) & 1) ? -1 : 0);
+      tmpResult |= *D13 ^ (((target >> 13) & 1) ? -1 : 0);
+      tmpResult |= *D14 ^ (((target >> 14) & 1) ? -1 : 0);
+      tmpResult |= *D15 ^ (((target >> 15) & 1) ? -1 : 0);
+
+      if (tmpResult == 0xffffffff) return tmpResult;
+    }
+
     if (i) KEYSET17 else KEYSET07
 
     s1(*D31 ^ k00, *D00 ^ k01, *D01 ^ k02, *D02 ^ k03, *D03 ^ k04, *D04 ^ k05, D40, D48, D54, D62);
@@ -1631,6 +1655,8 @@ DECLSPEC void DES (const u32 K00, const u32 K01, const u32 K02, const u32 K03, c
     s7(*D23 ^ k36, *D24 ^ k37, *D25 ^ k38, *D26 ^ k39, *D27 ^ k40, *D28 ^ k41, D63, D43, D53, D38);
     s8(*D27 ^ k42, *D28 ^ k43, *D29 ^ k44, *D30 ^ k45, *D31 ^ k46, *D00 ^ k47, D36, D58, D46, D52);
   }
+
+  return tmpResult;
 }
 
 DECLSPEC void transpose32c (PRIVATE_AS u32 *data)
@@ -1970,6 +1996,7 @@ KERNEL_FQ KERNEL_FA void m03000_mxx (KERN_ATTR_BITSLICE ())
 
     DES
     (
+      0, 0,
       k00, k01, k02, k03, k04, k05, k06,
       k07, k08, k09, k10, k11, k12, k13,
       k14, k15, k16, k17, k18, k19, k20,
@@ -2143,22 +2170,6 @@ KERNEL_FQ KERNEL_FA void m03000_sxx (KERN_ATTR_BITSLICE ())
   const u32 s0 = digests_buf[0].digest_buf[0];
   const u32 s1 = digests_buf[0].digest_buf[1];
 
-  const u32 S00 = (((s0 >>  0) & 1) ? -1 : 0);
-  const u32 S01 = (((s0 >>  1) & 1) ? -1 : 0);
-  const u32 S02 = (((s0 >>  2) & 1) ? -1 : 0);
-  const u32 S03 = (((s0 >>  3) & 1) ? -1 : 0);
-  const u32 S04 = (((s0 >>  4) & 1) ? -1 : 0);
-  const u32 S05 = (((s0 >>  5) & 1) ? -1 : 0);
-  const u32 S06 = (((s0 >>  6) & 1) ? -1 : 0);
-  const u32 S07 = (((s0 >>  7) & 1) ? -1 : 0);
-  const u32 S08 = (((s0 >>  8) & 1) ? -1 : 0);
-  const u32 S09 = (((s0 >>  9) & 1) ? -1 : 0);
-  const u32 S10 = (((s0 >> 10) & 1) ? -1 : 0);
-  const u32 S11 = (((s0 >> 11) & 1) ? -1 : 0);
-  const u32 S12 = (((s0 >> 12) & 1) ? -1 : 0);
-  const u32 S13 = (((s0 >> 13) & 1) ? -1 : 0);
-  const u32 S14 = (((s0 >> 14) & 1) ? -1 : 0);
-  const u32 S15 = (((s0 >> 15) & 1) ? -1 : 0);
   const u32 S16 = (((s0 >> 16) & 1) ? -1 : 0);
   const u32 S17 = (((s0 >> 17) & 1) ? -1 : 0);
   const u32 S18 = (((s0 >> 18) & 1) ? -1 : 0);
@@ -2413,8 +2424,9 @@ KERNEL_FQ KERNEL_FA void m03000_sxx (KERN_ATTR_BITSLICE ())
     u32 D62 = 0xffffffff;
     u32 D63 = 0xffffffff;
 
-    DES
+    u32 tmpResult = DES
     (
+      s0, 1,
       k00, k01, k02, k03, k04, k05, k06,
       k07, k08, k09, k10, k11, k12, k13,
       k14, k15, k16, k17, k18, k19, k20,
@@ -2432,25 +2444,6 @@ KERNEL_FQ KERNEL_FA void m03000_sxx (KERN_ATTR_BITSLICE ())
       &D48, &D49, &D50, &D51, &D52, &D53, &D54, &D55,
       &D56, &D57, &D58, &D59, &D60, &D61, &D62, &D63
     );
-
-    u32 tmpResult = 0;
-
-    tmpResult |= D00 ^ S00;
-    tmpResult |= D01 ^ S01;
-    tmpResult |= D02 ^ S02;
-    tmpResult |= D03 ^ S03;
-    tmpResult |= D04 ^ S04;
-    tmpResult |= D05 ^ S05;
-    tmpResult |= D06 ^ S06;
-    tmpResult |= D07 ^ S07;
-    tmpResult |= D08 ^ S08;
-    tmpResult |= D09 ^ S09;
-    tmpResult |= D10 ^ S10;
-    tmpResult |= D11 ^ S11;
-    tmpResult |= D12 ^ S12;
-    tmpResult |= D13 ^ S13;
-    tmpResult |= D14 ^ S14;
-    tmpResult |= D15 ^ S15;
 
     if (tmpResult == 0xffffffff) continue;
 
