@@ -1619,8 +1619,6 @@ DECLSPEC u32 DES (const u32 target, const u32 early_reject, const u32 K00, const
     s4(*D43 ^ k18, *D44 ^ k19, *D45 ^ k20, *D46 ^ k21, *D47 ^ k22, *D48 ^ k23, D25, D19, D09, D00);
     s5(*D47 ^ k24, *D48 ^ k25, *D49 ^ k26, *D50 ^ k27, *D51 ^ k28, *D52 ^ k29, D07, D13, D24, D02);
     s6(*D51 ^ k30, *D52 ^ k31, *D53 ^ k32, *D54 ^ k33, *D55 ^ k34, *D56 ^ k35, D03, D28, D10, D18);
-    s7(*D55 ^ k36, *D56 ^ k37, *D57 ^ k38, *D58 ^ k39, *D59 ^ k40, *D60 ^ k41, D31, D11, D21, D06);
-    s8(*D59 ^ k42, *D60 ^ k43, *D61 ^ k44, *D62 ^ k45, *D63 ^ k46, *D32 ^ k47, D04, D26, D14, D20);
 
     if (i && early_reject)
     {
@@ -1628,18 +1626,27 @@ DECLSPEC u32 DES (const u32 target, const u32 early_reject, const u32 K00, const
       tmpResult |= *D01 ^ (((target >>  1) & 1) ? -1 : 0);
       tmpResult |= *D02 ^ (((target >>  2) & 1) ? -1 : 0);
       tmpResult |= *D03 ^ (((target >>  3) & 1) ? -1 : 0);
-      tmpResult |= *D04 ^ (((target >>  4) & 1) ? -1 : 0);
       tmpResult |= *D05 ^ (((target >>  5) & 1) ? -1 : 0);
-      tmpResult |= *D06 ^ (((target >>  6) & 1) ? -1 : 0);
       tmpResult |= *D07 ^ (((target >>  7) & 1) ? -1 : 0);
       tmpResult |= *D08 ^ (((target >>  8) & 1) ? -1 : 0);
       tmpResult |= *D09 ^ (((target >>  9) & 1) ? -1 : 0);
       tmpResult |= *D10 ^ (((target >> 10) & 1) ? -1 : 0);
-      tmpResult |= *D11 ^ (((target >> 11) & 1) ? -1 : 0);
       tmpResult |= *D12 ^ (((target >> 12) & 1) ? -1 : 0);
       tmpResult |= *D13 ^ (((target >> 13) & 1) ? -1 : 0);
-      tmpResult |= *D14 ^ (((target >> 14) & 1) ? -1 : 0);
       tmpResult |= *D15 ^ (((target >> 15) & 1) ? -1 : 0);
+
+      if (tmpResult == 0xffffffff) return tmpResult;
+    }
+
+    s7(*D55 ^ k36, *D56 ^ k37, *D57 ^ k38, *D58 ^ k39, *D59 ^ k40, *D60 ^ k41, D31, D11, D21, D06);
+    s8(*D59 ^ k42, *D60 ^ k43, *D61 ^ k44, *D62 ^ k45, *D63 ^ k46, *D32 ^ k47, D04, D26, D14, D20);
+
+    if (i && early_reject)
+    {
+      tmpResult |= *D04 ^ (((target >>  4) & 1) ? -1 : 0);
+      tmpResult |= *D06 ^ (((target >>  6) & 1) ? -1 : 0);
+      tmpResult |= *D11 ^ (((target >> 11) & 1) ? -1 : 0);
+      tmpResult |= *D14 ^ (((target >> 14) & 1) ? -1 : 0);
 
       if (tmpResult == 0xffffffff) return tmpResult;
     }
