@@ -276,9 +276,7 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
 
   for (u32 il_pos = 0; il_pos < IL_CNT; il_pos += VECT_SIZE)
   {
-    const u32x w0r = words_buf_r[il_pos / VECT_SIZE];
-
-    const u32x w0 = w0l + w0r;
+    const u32x w0 = w0l + words_buf_r[il_pos / VECT_SIZE];
 
     u32x pre_a = a_rev;
     u32x pre_b = b_rev;
