@@ -32,6 +32,122 @@ typedef struct oldoffice01
 
 } oldoffice01_t;
 
+DECLSPEC u32 m09700_rc4_next_16_early (LOCAL_AS u32 *S, const u8 i, const u8 j, PRIVATE_AS const u32 *in, PRIVATE_AS u32 *out, const u32 search0, const u64 lid)
+{
+  u8 a = i;
+  u8 b = j;
+
+  u32 xor4 = 0;
+
+  u32 tmp;
+
+  u8 idx;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 = tmp;
+
+  if (((in[0] ^ xor4) & 0xff) != (search0 & 0xff)) return 0;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp << 8;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp << 16;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp << 24;
+
+  out[0] = in[0] ^ xor4;
+
+  #ifdef _unroll
+  #pragma unroll
+  #endif
+  for (int k = 1; k < 4; k++)
+  {
+    xor4 = 0;
+
+    a += 1;
+    b += GET_KEY8 (S, a, lid);
+
+    rc4_swap (S, a, b, lid);
+
+    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+    tmp = GET_KEY8 (S, idx, lid);
+
+    xor4 |= tmp << 0;
+
+    a += 1;
+    b += GET_KEY8 (S, a, lid);
+
+    rc4_swap (S, a, b, lid);
+
+    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+    tmp = GET_KEY8 (S, idx, lid);
+
+    xor4 |= tmp << 8;
+
+    a += 1;
+    b += GET_KEY8 (S, a, lid);
+
+    rc4_swap (S, a, b, lid);
+
+    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+    tmp = GET_KEY8 (S, idx, lid);
+
+    xor4 |= tmp << 16;
+
+    a += 1;
+    b += GET_KEY8 (S, a, lid);
+
+    rc4_swap (S, a, b, lid);
+
+    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+    tmp = GET_KEY8 (S, idx, lid);
+
+    xor4 |= tmp << 24;
+
+    out[k] = in[k] ^ xor4;
+  }
+
+  return 1;
+}
+
 DECLSPEC void m09700m (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u32 *w2, PRIVATE_AS u32 *w3, const u32 pw_len, KERN_ATTR_FUNC_ESALT (oldoffice01_t))
 {
   /**
@@ -832,7 +948,7 @@ DECLSPEC void m09700s (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, 
 
     md5_transform (w0_t, w1_t, w2_t, w3_t, digest);
 
-    rc4_next_16 (S, 16, j, digest, out, lid);
+    if (m09700_rc4_next_16_early (S, 16, j, digest, out, search[0], lid) == 0) continue;
 
     COMPARE_S_SIMD (out[0], out[1], out[2], out[3]);
   }
