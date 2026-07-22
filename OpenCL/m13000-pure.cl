@@ -27,7 +27,7 @@ typedef struct pbkdf2_sha256_tmp
 
 } pbkdf2_sha256_tmp_t;
 
-DECLSPEC void sha256_transform_32_vector (PRIVATE_AS const u32x *msg, PRIVATE_AS const u32x *state, PRIVATE_AS u32x *digest)
+DECLSPEC void sha256_transform_32_vector (PRIVATE_AS const u32x *msg, PRIVATE_AS const u32x *state, const u32x state_t1, const u32x state_t2, PRIVATE_AS u32x *digest)
 {
   u32x a = state[0];
   u32x b = state[1];
@@ -36,7 +36,7 @@ DECLSPEC void sha256_transform_32_vector (PRIVATE_AS const u32x *msg, PRIVATE_AS
   u32x e = state[4];
   u32x f = state[5];
   u32x g = state[6];
-  u32x h = state[7];
+  u32x h;
 
   u32x w0_t = msg[0];
   u32x w1_t = msg[1];
@@ -55,7 +55,9 @@ DECLSPEC void sha256_transform_32_vector (PRIVATE_AS const u32x *msg, PRIVATE_AS
   u32x we_t = 0;
   u32x wf_t = (64 + 32) * 8;
 
-                                                 SHA256_STEP (SHA256_F0o, SHA256_F1o, a, b, c, d, e, f, g, h, w0_t, SHA256C00);
+  h  = state_t1 + w0_t;
+  d += h;
+  h += state_t2;
                                                  SHA256_STEP (SHA256_F0o, SHA256_F1o, h, a, b, c, d, e, f, g, w1_t, SHA256C01);
                                                  SHA256_STEP (SHA256_F0o, SHA256_F1o, g, h, a, b, c, d, e, f, w2_t, SHA256C02);
                                                  SHA256_STEP (SHA256_F0o, SHA256_F1o, f, g, h, a, b, c, d, e, w3_t, SHA256C03);
@@ -130,10 +132,10 @@ DECLSPEC void sha256_transform_32_vector (PRIVATE_AS const u32x *msg, PRIVATE_AS
   digest[7] = state[7] + h;
 }
 
-DECLSPEC void hmac_sha256_run_V (PRIVATE_AS u32x *ipad, PRIVATE_AS u32x *opad, PRIVATE_AS u32x *digest)
+DECLSPEC void hmac_sha256_run_V (PRIVATE_AS u32x *ipad, PRIVATE_AS u32x *opad, const u32x ipad_t1, const u32x ipad_t2, const u32x opad_t1, const u32x opad_t2, PRIVATE_AS u32x *digest)
 {
-  sha256_transform_32_vector (digest, ipad, digest);
-  sha256_transform_32_vector (digest, opad, digest);
+  sha256_transform_32_vector (digest, ipad, ipad_t1, ipad_t2, digest);
+  sha256_transform_32_vector (digest, opad, opad_t1, opad_t2, digest);
 }
 
 KERNEL_FQ KERNEL_FA void m13000_init (KERN_ATTR_TMPS (pbkdf2_sha256_tmp_t))
@@ -247,6 +249,11 @@ KERNEL_FQ KERNEL_FA void m13000_loop (KERN_ATTR_TMPS (pbkdf2_sha256_tmp_t))
   opad[6] = packv (tmps, opad, gid, 6);
   opad[7] = packv (tmps, opad, gid, 7);
 
+  const u32x ipad_t1 = hc_add3 (ipad[7], make_u32x (SHA256C00), SHA256_S3 (ipad[4])) + SHA256_F1o (ipad[4], ipad[5], ipad[6]);
+  const u32x ipad_t2 = SHA256_S2 (ipad[0]) + SHA256_F0o (ipad[0], ipad[1], ipad[2]);
+  const u32x opad_t1 = hc_add3 (opad[7], make_u32x (SHA256C00), SHA256_S3 (opad[4])) + SHA256_F1o (opad[4], opad[5], opad[6]);
+  const u32x opad_t2 = SHA256_S2 (opad[0]) + SHA256_F0o (opad[0], opad[1], opad[2]);
+
   for (u32 i = 0; i < 8; i += 8)
   {
     u32x dgst[8];
@@ -272,7 +279,7 @@ KERNEL_FQ KERNEL_FA void m13000_loop (KERN_ATTR_TMPS (pbkdf2_sha256_tmp_t))
 
     for (u32 j = 0; j < LOOP_CNT; j++)
     {
-      hmac_sha256_run_V (ipad, opad, dgst);
+      hmac_sha256_run_V (ipad, opad, ipad_t1, ipad_t2, opad_t1, opad_t2, dgst);
 
       out[0] ^= dgst[0];
       out[1] ^= dgst[1];
