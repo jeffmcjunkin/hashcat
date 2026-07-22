@@ -335,7 +335,7 @@ DECLSPEC u8 rc4_next_16 (LOCAL_AS u32 *S, const u8 i, const u8 j, PRIVATE_AS con
   u8 a = i;
   u8 b = j;
 
-  #pragma unroll 1
+  #pragma unroll 2
   for (int k = 0; k < 4; k++)
   {
     u32 xor4 = 0;
