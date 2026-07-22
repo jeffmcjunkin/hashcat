@@ -67,6 +67,8 @@ DECLSPEC u32 m09700_rc4_next_16_early (LOCAL_AS u32 *S, const u8 i, const u8 j, 
 
   xor4 |= tmp << 8;
 
+  if (((in[0] ^ xor4) & 0xffff) != (search0 & 0xffff)) return 0;
+
   a += 1;
   b += GET_KEY8 (S, a, lid);
 
