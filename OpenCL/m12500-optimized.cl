@@ -156,57 +156,57 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
         const int km = k & 3;
 
         const u32 tmp0 = iter_s >> (km * 8);
-        const u32 tmp1 = (km == 3) ? iter_s << 8 : 0;
+        const u32 tmp1 = iter_s << 8;
 
         switch (kd)
         {
           case  0: w[ 0] |= tmp0;
-                   w[ 1] |= tmp1;
+                   if (km == 3) w[ 1] |= tmp1;
                    break;
           case  1: w[ 1] |= tmp0;
-                   w[ 2] |= tmp1;
+                   if (km == 3) w[ 2] |= tmp1;
                    break;
           case  2: w[ 2] |= tmp0;
-                   w[ 3] |= tmp1;
+                   if (km == 3) w[ 3] |= tmp1;
                    break;
           case  3: w[ 3] |= tmp0;
-                   w[ 4] |= tmp1;
+                   if (km == 3) w[ 4] |= tmp1;
                    break;
           case  4: w[ 4] |= tmp0;
-                   w[ 5] |= tmp1;
+                   if (km == 3) w[ 5] |= tmp1;
                    break;
           case  5: w[ 5] |= tmp0;
-                   w[ 6] |= tmp1;
+                   if (km == 3) w[ 6] |= tmp1;
                    break;
           case  6: w[ 6] |= tmp0;
-                   w[ 7] |= tmp1;
+                   if (km == 3) w[ 7] |= tmp1;
                    break;
           case  7: w[ 7] |= tmp0;
-                   w[ 8] |= tmp1;
+                   if (km == 3) w[ 8] |= tmp1;
                    break;
           case  8: w[ 8] |= tmp0;
-                   w[ 9] |= tmp1;
+                   if (km == 3) w[ 9] |= tmp1;
                    break;
           case  9: w[ 9] |= tmp0;
-                   w[10] |= tmp1;
+                   if (km == 3) w[10] |= tmp1;
                    break;
           case 10: w[10] |= tmp0;
-                   w[11] |= tmp1;
+                   if (km == 3) w[11] |= tmp1;
                    break;
           case 11: w[11] |= tmp0;
-                   w[12] |= tmp1;
+                   if (km == 3) w[12] |= tmp1;
                    break;
           case 12: w[12] |= tmp0;
-                   w[13] |= tmp1;
+                   if (km == 3) w[13] |= tmp1;
                    break;
           case 13: w[13] |= tmp0;
-                   w[14] |= tmp1;
+                   if (km == 3) w[14] |= tmp1;
                    break;
           case 14: w[14] |= tmp0;
-                   w[15] |= tmp1;
+                   if (km == 3) w[15] |= tmp1;
                    break;
           case 15: w[15] |= tmp0;
-                   tmp   =                   tmp1;
+                   if (km == 3) tmp = tmp1;
                    break;
         }
 
