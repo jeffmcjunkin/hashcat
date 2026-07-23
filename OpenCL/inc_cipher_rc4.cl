@@ -396,6 +396,83 @@ DECLSPEC u8 rc4_next_16 (LOCAL_AS u32 *S, const u8 i, const u8 j, PRIVATE_AS con
   return b;
 }
 
+DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const u8 i, const u8 j, GLOBAL_AS const u32 *in, const u64 lid)
+{
+  u8 a = i;
+  u8 b = j;
+
+  #ifdef _unroll
+  #pragma unroll
+  #endif
+  for (int k = 0; k < 8; k++)
+  {
+    a += 1;
+    b += GET_KEY8 (S, a, lid);
+
+    rc4_swap (S, a, b, lid);
+  }
+
+  u32 xor4 = 0;
+
+  u32 tmp;
+
+  u8 idx;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp << 0;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp << 8;
+
+  const u32 prefix = (in[2] ^ xor4) & 0xffff;
+
+  if ((prefix != 0x8163) && (prefix != 0x8263)) return -1;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp << 16;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp << 24;
+
+  const u32 out = in[2] ^ xor4;
+
+  if (((out & 0xff00ffff) != 0x30008163) && ((out & 0x0000ffff) != 0x00008263)) return -1;
+
+  return b;
+}
+
 DECLSPEC RC4_NOINLINE u8 rc4_next_12_global (LOCAL_AS u32 *S, const u8 i, const u8 j, GLOBAL_AS const u32 *in, PRIVATE_AS u32 *out, const u64 lid)
 {
   u8 a = i;

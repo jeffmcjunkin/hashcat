@@ -116,7 +116,6 @@ DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS
 {
   rc4_init_128 (S, data, lid);
 
-  u32 out0[4];
   u32 out1[4];
 
   u8 i = 0;
@@ -133,9 +132,11 @@ DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS
     next headers follow the same ASN1 "type-length-data" scheme
   */
 
-  j = rc4_next_12_global (S, i, j, edata2 + 0, out0, lid); i += 12;
+  const int probe0 = rc4_next_12_global_krb5_staged (S, i, j, edata2 + 0, lid); i += 12;
 
-  if (((out0[2] & 0xff00ffff) != 0x30008163) && ((out0[2] & 0x0000ffff) != 0x00008263)) return 0;
+  if (probe0 < 0) return 0;
+
+  j = (u8) probe0;
 
   j = rc4_next_12_global (S, i, j, edata2 + 3, out1, lid); i += 12;
 
