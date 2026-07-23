@@ -56,6 +56,14 @@ DECLSPEC u32x transform_racf_word (const u32x w)
        | BOX1 (((w >> 24) & 0xff), c_ascii_to_ebcdic_pc) << 24;
 }
 
+DECLSPEC u32 transform_racf_word_S (const u32 w)
+{
+  return c_ascii_to_ebcdic_pc[(w >>  0) & 0xff] <<  0
+       | c_ascii_to_ebcdic_pc[(w >>  8) & 0xff] <<  8
+       | c_ascii_to_ebcdic_pc[(w >> 16) & 0xff] << 16
+       | c_ascii_to_ebcdic_pc[(w >> 24) & 0xff] << 24;
+}
+
 DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64], PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTOR ())
 {
   /**
@@ -79,6 +87,8 @@ DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
 
   u32 w1 = w[1];
 
+  const u32x d = transform_racf_word_S (w1);
+
   for (u32 il_pos = 0; il_pos < IL_CNT; il_pos += VECT_SIZE)
   {
     const u32x w0r = words_buf_r[il_pos / VECT_SIZE];
@@ -90,7 +100,6 @@ DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
      */
 
     const u32x c = transform_racf_word (w0);
-    const u32x d = transform_racf_word (w1);
 
     u32x Kc[16];
     u32x Kd[16];
@@ -142,6 +151,8 @@ DECLSPEC void m08500s (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
 
   u32 w1 = w[1];
 
+  const u32x d = transform_racf_word_S (w1);
+
   for (u32 il_pos = 0; il_pos < IL_CNT; il_pos += VECT_SIZE)
   {
     const u32x w0r = words_buf_r[il_pos / VECT_SIZE];
@@ -153,7 +164,6 @@ DECLSPEC void m08500s (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
      */
 
     const u32x c = transform_racf_word (w0);
-    const u32x d = transform_racf_word (w1);
 
     u32x Kc[16];
     u32x Kd[16];
