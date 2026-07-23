@@ -242,34 +242,28 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, PRIVATE_AS 
       #endif
     }
     #elif SCRYPT_TMTO == 2
-    switch (km)
+    if (km & 2)
     {
-      case 3:
-        salsa_r (T);
+      salsa_r (T);
 
-        #if SCRYPT_R > 1
-        scrypt_shuffle (T);
-        #endif
+      #if SCRYPT_R > 1
+      scrypt_shuffle (T);
+      #endif
 
-        // fall-through
+      salsa_r (T);
 
-      case 2:
-        salsa_r (T);
+      #if SCRYPT_R > 1
+      scrypt_shuffle (T);
+      #endif
+    }
 
-        #if SCRYPT_R > 1
-        scrypt_shuffle (T);
-        #endif
+    if (km & 1)
+    {
+      salsa_r (T);
 
-        // fall-through
-
-      case 1:
-        salsa_r (T);
-
-        #if SCRYPT_R > 1
-        scrypt_shuffle (T);
-        #endif
-
-        break;
+      #if SCRYPT_R > 1
+      scrypt_shuffle (T);
+      #endif
     }
     #else
     for (u32 i = 0; i < km; i++)
