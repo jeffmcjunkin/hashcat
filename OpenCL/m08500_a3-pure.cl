@@ -50,10 +50,13 @@ CONSTANT_VK u32a c_ascii_to_ebcdic_pc[256] =
 
 DECLSPEC u32x transform_racf_word (const u32x w)
 {
-  return BOX1 (((w >>  0) & 0xff), c_ascii_to_ebcdic_pc) <<  0
-       | BOX1 (((w >>  8) & 0xff), c_ascii_to_ebcdic_pc) <<  8
-       | BOX1 (((w >> 16) & 0xff), c_ascii_to_ebcdic_pc) << 16
-       | BOX1 (((w >> 24) & 0xff), c_ascii_to_ebcdic_pc) << 24;
+  const u32x b0 = BOX1 (((w >>  0) & 0xff), c_ascii_to_ebcdic_pc);
+  const u32x b1 = BOX1 (((w >>  8) & 0xff), c_ascii_to_ebcdic_pc);
+  const u32x b2 = BOX1 (((w >> 16) & 0xff), c_ascii_to_ebcdic_pc);
+  const u32x b3 = BOX1 (((w >> 24) & 0xff), c_ascii_to_ebcdic_pc);
+
+  return hc_byte_perm (b0, b1, 0x1140)
+       | hc_byte_perm (b2, b3, 0x4011);
 }
 
 DECLSPEC u32 transform_racf_word_S (const u32 w)
