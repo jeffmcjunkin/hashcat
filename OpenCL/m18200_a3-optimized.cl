@@ -344,50 +344,21 @@ DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS
   return 1;
 }
 
-DECLSPEC void kerb_prepare (PRIVATE_AS const u32 *w0, PRIVATE_AS const u32 *w1, const u32 pw_len, PRIVATE_AS const u32 *checksum, PRIVATE_AS u32 *digest, const u32 make_k3)
+DECLSPEC void kerb_prepare (PRIVATE_AS const u32 *w0, PRIVATE_AS const u32 *w1, PRIVATE_AS const u32 *w2, PRIVATE_AS const u32 *w3, PRIVATE_AS const u32 *checksum, PRIVATE_AS u32 *digest, const u32 make_k3)
 {
-  /**
-   * pads
-   */
-
-  u32 w0_t[4];
-  u32 w1_t[4];
-  u32 w2_t[4];
-  u32 w3_t[4];
-
-  w0_t[0] = w0[0];
-  w0_t[1] = w0[1];
-  w0_t[2] = w0[2];
-  w0_t[3] = w0[3];
-  w1_t[0] = w1[0];
-  w1_t[1] = w1[1];
-  w1_t[2] = w1[2];
-  w1_t[3] = w1[3];
-  w2_t[0] = 0;
-  w2_t[1] = 0;
-  w2_t[2] = 0;
-  w2_t[3] = 0;
-  w3_t[0] = 0;
-  w3_t[1] = 0;
-  w3_t[2] = 0;
-  w3_t[3] = 0;
-
   // K=MD4(Little_indian(UNICODE(pwd))
-
-  append_0x80_2x4 (w0_t, w1_t, pw_len);
-
-  make_utf16le (w1_t, w2_t, w3_t);
-  make_utf16le (w0_t, w0_t, w1_t);
-
-  w3_t[2] = pw_len * 8 * 2;
-  w3_t[3] = 0;
 
   digest[0] = MD4M_A;
   digest[1] = MD4M_B;
   digest[2] = MD4M_C;
   digest[3] = MD4M_D;
 
-  md4_transform (w0_t, w1_t, w2_t, w3_t, digest);
+  md4_transform (w0, w1, w2, w3, digest);
+
+  u32 w0_t[4];
+  u32 w1_t[4];
+  u32 w2_t[4];
+  u32 w3_t[4];
 
   // K1=MD5_HMAC(K,1); with 2 encoded as little indian on 4 bytes (02000000 in hexa);
 
@@ -501,13 +472,46 @@ DECLSPEC void m18200 (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, P
    * loop
    */
 
-  u32 w0l = w0[0];
+  u32 md4_w0[4];
+
+  md4_w0[0] = w0[0];
+  md4_w0[1] = w0[1];
+  md4_w0[2] = w0[2];
+  md4_w0[3] = w0[3];
+
+  u32 md4_w1[4];
+
+  md4_w1[0] = w1[0];
+  md4_w1[1] = w1[1];
+  md4_w1[2] = w1[2];
+  md4_w1[3] = w1[3];
+
+  u32 md4_w2[4] = { 0 };
+  u32 md4_w3[4] = { 0 };
+
+  append_0x80_2x4 (md4_w0, md4_w1, pw_len);
+
+  make_utf16le_S (md4_w1, md4_w2, md4_w3);
+  make_utf16le_S (md4_w0, md4_w0, md4_w1);
+
+  md4_w3[2] = pw_len * 8 * 2;
+  md4_w3[3] = 0;
+
+  const u32 md4_w0l0 = md4_w0[0];
+  const u32 md4_w0l1 = md4_w0[1];
 
   for (u32 il_pos = 0; il_pos < IL_CNT; il_pos++)
   {
     const u32 w0r = bfs_buf[il_pos].i;
 
-    w0[0] = w0l | w0r;
+    u32 modifier[4] = { w0r, 0, 0, 0 };
+    u32 modifier_utf16[4];
+    u32 modifier_unused[4];
+
+    make_utf16le_S (modifier, modifier_utf16, modifier_unused);
+
+    md4_w0[0] = md4_w0l0 | modifier_utf16[0];
+    md4_w0[1] = md4_w0l1 | modifier_utf16[1];
 
     /**
      * kerberos
@@ -515,7 +519,7 @@ DECLSPEC void m18200 (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, P
 
     u32 digest[4];
 
-    kerb_prepare (w0, w1, pw_len, checksum, digest, 1);
+    kerb_prepare (md4_w0, md4_w1, md4_w2, md4_w3, checksum, digest, 1);
 
     u32 tmp[4];
 
@@ -530,7 +534,7 @@ DECLSPEC void m18200 (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, P
 
     u32 K2[4];
 
-    kerb_prepare (w0, w1, pw_len, checksum, K2, 0);
+    kerb_prepare (md4_w0, md4_w1, md4_w2, md4_w3, checksum, K2, 0);
 
     if (decrypt_and_check (S, tmp, esalt_bufs[DIGESTS_OFFSET_HOST].edata2, esalt_bufs[DIGESTS_OFFSET_HOST].edata2_len, K2, checksum, lid) == 1)
     {
