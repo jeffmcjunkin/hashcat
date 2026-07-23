@@ -9,6 +9,14 @@
 #include "inc_common.h"
 #include "inc_hash_scrypt.h"
 
+#if defined IS_CUDA
+#define SCRYPT_RESTRICT __restrict__
+#elif defined IS_OPENCL
+#define SCRYPT_RESTRICT restrict
+#else
+#define SCRYPT_RESTRICT
+#endif
+
 DECLSPEC hc_uint4_t xor_uint4 (const hc_uint4_t a, const hc_uint4_t b)
 {
   hc_uint4_t r;
@@ -191,7 +199,7 @@ DECLSPEC void scrypt_smix_init (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, GLOBAL_AS v
   for (u32 i = 0; i < STATE_CNT4; i++) P[i] = X[i];
 }
 
-DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, PRIVATE_AS u32 *T, GLOBAL_AS void *V0, GLOBAL_AS void *V1, GLOBAL_AS void *V2, GLOBAL_AS void *V3, const u32 gid, const u32 lid, const u32 lsz, const u32 bid)
+DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 * SCRYPT_RESTRICT X, PRIVATE_AS u32 * SCRYPT_RESTRICT T, GLOBAL_AS void *V0, GLOBAL_AS void *V1, GLOBAL_AS void *V2, GLOBAL_AS void *V3, const u32 gid, const u32 lid, const u32 lsz, const u32 bid)
 {
   const u32 ySIZE = SCRYPT_N >> SCRYPT_TMTO;
   const u32 zSIZE = STATE_CNT44;
@@ -555,3 +563,5 @@ DECLSPEC void scrypt_pbkdf2_ggg (GLOBAL_AS const u32 *pw_buf, const int pw_len, 
 
   scrypt_pbkdf2_body_pg (&sha256_hmac_ctx, out_buf, out_len);
 }
+
+#undef SCRYPT_RESTRICT
