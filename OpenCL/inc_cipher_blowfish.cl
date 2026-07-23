@@ -644,6 +644,59 @@ DECLSPEC void blowfish_encrypt (PRIVATE_AS u32 *P, LOCAL_AS u32 *S0, LOCAL_AS u3
     P[i * 2 + 1] = R0;
   }
 
+  #ifdef BCRYPT_UNROLL_SBOX_EXPANSION
+  for (u32 i = 0; i < 256; i += 4)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S0, i + 0, L0);
+    SET_KEY32 (S0, i + 1, R0);
+
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S0, i + 2, L0);
+    SET_KEY32 (S0, i + 3, R0);
+  }
+
+  for (u32 i = 0; i < 256; i += 4)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S1, i + 0, L0);
+    SET_KEY32 (S1, i + 1, R0);
+
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S1, i + 2, L0);
+    SET_KEY32 (S1, i + 3, R0);
+  }
+
+  for (u32 i = 0; i < 256; i += 4)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S2, i + 0, L0);
+    SET_KEY32 (S2, i + 1, R0);
+
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S2, i + 2, L0);
+    SET_KEY32 (S2, i + 3, R0);
+  }
+
+  for (u32 i = 0; i < 256; i += 4)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S3, i + 0, L0);
+    SET_KEY32 (S3, i + 1, R0);
+
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S3, i + 2, L0);
+    SET_KEY32 (S3, i + 3, R0);
+  }
+  #else
   for (u32 i = 0; i < 256; i += 2)
   {
     BF_ENCRYPT (L0, R0);
@@ -675,4 +728,5 @@ DECLSPEC void blowfish_encrypt (PRIVATE_AS u32 *P, LOCAL_AS u32 *S0, LOCAL_AS u3
     SET_KEY32 (S3, i + 0, L0);
     SET_KEY32 (S3, i + 1, R0);
   }
+  #endif
 }
