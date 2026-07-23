@@ -167,26 +167,8 @@ DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 e
   return 1;
 }
 
-DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS const u32 *edata2, const u32 edata2_len, const u32 edata2_2, const u32 edata2_3, PRIVATE_AS const u32 *K2, PRIVATE_AS const u32 *checksum, const u64 lid)
+DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS const u32 *edata2, const u32 edata2_len, PRIVATE_AS const u32 *K2, PRIVATE_AS const u32 *checksum, const u64 lid)
 {
-  rc4_init_128 (S, data, lid);
-
-  /*
-    8 first bytes are nonce, then ASN1 structs (DER encoding: TLV)
-
-    The first byte is always 0x79 (01 1 11001, where 01 = "class=APPLICATION", 1 = "form=constructed", 11001 is application type 25)
-    The next byte is the length:
-
-    if length < 128 bytes:
-        length is on 1 byte, and the next byte is 0x30 (class=SEQUENCE)
-    else if length <= 256:
-        length is on 2 bytes, the first byte is 0x81, and the third byte is 0x30 (class=SEQUENCE)
-    else if length > 256:
-        length is on 3 bytes, the first byte is 0x82, and the fourth byte is 0x30 (class=SEQUENCE)
-  */
-
-  if (asrep_early_check (S, edata2_2, edata2_3, lid) == 0) return 0;
-
   rc4_init_128 (S, data, lid);
 
   u8 i = 0;
@@ -362,7 +344,7 @@ DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS
   return 1;
 }
 
-DECLSPEC void kerb_prepare (PRIVATE_AS const u32 *w0, PRIVATE_AS const u32 *w1, const u32 pw_len, PRIVATE_AS const u32 *checksum, PRIVATE_AS u32 *digest, PRIVATE_AS u32 *K2)
+DECLSPEC void kerb_prepare (PRIVATE_AS const u32 *w0, PRIVATE_AS const u32 *w1, const u32 pw_len, PRIVATE_AS const u32 *checksum, PRIVATE_AS u32 *digest, const u32 make_k3)
 {
   /**
    * pads
@@ -450,12 +432,9 @@ DECLSPEC void kerb_prepare (PRIVATE_AS const u32 *w0, PRIVATE_AS const u32 *w1, 
 
   hmac_md5_run (w0_t, w1_t, w2_t, w3_t, ipad, opad, digest);
 
-  // K2 = K1;
+  // K2 = K1
 
-  K2[0] = digest[0];
-  K2[1] = digest[1];
-  K2[2] = digest[2];
-  K2[3] = digest[3];
+  if (make_k3 == 0) return;
 
   // K3=MD5_HMAC(K1,checksum);
 
@@ -536,9 +515,7 @@ DECLSPEC void m18200 (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, P
 
     u32 digest[4];
 
-    u32 K2[4];
-
-    kerb_prepare (w0, w1, pw_len, checksum, digest, K2);
+    kerb_prepare (w0, w1, pw_len, checksum, digest, 1);
 
     u32 tmp[4];
 
@@ -547,7 +524,15 @@ DECLSPEC void m18200 (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, P
     tmp[2] = digest[2];
     tmp[3] = digest[3];
 
-    if (decrypt_and_check (S, tmp, esalt_bufs[DIGESTS_OFFSET_HOST].edata2, esalt_bufs[DIGESTS_OFFSET_HOST].edata2_len, edata2_2, edata2_3, K2, checksum, lid) == 1)
+    rc4_init_128 (S, tmp, lid);
+
+    if (asrep_early_check (S, edata2_2, edata2_3, lid) == 0) continue;
+
+    u32 K2[4];
+
+    kerb_prepare (w0, w1, pw_len, checksum, K2, 0);
+
+    if (decrypt_and_check (S, tmp, esalt_bufs[DIGESTS_OFFSET_HOST].edata2, esalt_bufs[DIGESTS_OFFSET_HOST].edata2_len, K2, checksum, lid) == 1)
     {
       if (hc_atomic_inc (&hashes_shown[DIGESTS_OFFSET_HOST]) == 0)
       {
