@@ -17,6 +17,18 @@
 
 #define INITVAL 0x0101010101010101UL
 
+// Low half of LPS.  Used when only output bytes 0 and 1 of the following
+// round are consumed, allowing the penultimate state to stay 32-bit.
+#define SBOG_LPSti32                                          \
+  l32_from_64 (BOX (s_sbob_sl64, 0, ((t[0] >> (i * 8)) & 0xff))) ^ \
+  l32_from_64 (BOX (s_sbob_sl64, 1, ((t[1] >> (i * 8)) & 0xff))) ^ \
+  l32_from_64 (BOX (s_sbob_sl64, 2, ((t[2] >> (i * 8)) & 0xff))) ^ \
+  l32_from_64 (BOX (s_sbob_sl64, 3, ((t[3] >> (i * 8)) & 0xff))) ^ \
+  l32_from_64 (BOX (s_sbob_sl64, 4, ((t[4] >> (i * 8)) & 0xff))) ^ \
+  l32_from_64 (BOX (s_sbob_sl64, 5, ((t[5] >> (i * 8)) & 0xff))) ^ \
+  l32_from_64 (BOX (s_sbob_sl64, 6, ((t[6] >> (i * 8)) & 0xff))) ^ \
+  l32_from_64 (BOX (s_sbob_sl64, 7, ((t[7] >> (i * 8)) & 0xff)))
+
 // Precomputed round-key schedule for the very first compression, where h == INITVAL.
 // In streebog_g the key schedule k depends only on h (via k = LPS(h)) and the round
 // constants sbob256_rc64 - the message m never enters k. With h fixed to the Streebog-256
@@ -161,7 +173,7 @@ DECLSPEC void streebog_g_last (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOC
     s[i] = m[i];
   }
 
-  for (int r = 0; r < 11; r++)
+  for (int r = 0; r < 10; r++)
   {
     for (int i = 0; i < 8; i++)
     {
@@ -190,11 +202,38 @@ DECLSPEC void streebog_g_last (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOC
     }
   }
 
-  // final round (r == 11): only output words 0 and 1 are needed downstream
+  // Penultimate round (r == 10): the final round consumes only bytes 0 and 1
+  // of each output word, so preserve just the low halves of both chains.
 
   for (int i = 0; i < 8; i++)
   {
     t[i] = s[i] ^ k[i];
+  }
+
+  u32x sl[8];
+
+  for (int i = 0; i < 8; i++)
+  {
+    sl[i] = SBOG_LPSti32;
+  }
+
+  for (int i = 0; i < 8; i++)
+  {
+    t[i] = k[i] ^ sbob256_rc64[10][i];
+  }
+
+  u32x kl[8];
+
+  for (int i = 0; i < 8; i++)
+  {
+    kl[i] = SBOG_LPSti32;
+  }
+
+  // Final round (r == 11): only output words 0 and 1 are needed downstream.
+
+  for (int i = 0; i < 8; i++)
+  {
+    t[i] = (u64x) (sl[i] ^ kl[i]);
   }
 
   u64x sf[2];
@@ -206,7 +245,7 @@ DECLSPEC void streebog_g_last (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOC
 
   for (int i = 0; i < 8; i++)
   {
-    t[i] = k[i] ^ sbob256_rc64[11][i];
+    t[i] = (u64x) (kl[i] ^ ((u32) sbob256_rc64[11][i]));
   }
 
   u64x kf[2];
