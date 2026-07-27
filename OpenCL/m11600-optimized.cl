@@ -131,15 +131,25 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
 
   for (u32 i = 0; i < LOOP_CNT; i += 32)
   {
+    // byte 1 is shared by all 16 staging slots for each aligned 256-counter window
+    if ((loop_pos_pos & 0xff) == 0)
+    {
+      const u8 byte1 = unpack_v8b_from_v32_S (loop_pos_pos);
+
+      #pragma unroll
+      for (u32 j = 0, p = (pw_len * 2) + 1; j < 16; j++, p += iter_len)
+      {
+        PUTCHAR_BE (largeblock, p, byte1);
+      }
+    }
+
     // first iteration set
     #pragma unroll
     for (u32 i = 0, p = pw_len * 2; i < 16; i++, p += iter_len)
     {
       const u8 byte0 = unpack_v8a_from_v32_S (loop_pos_pos);
-      const u8 byte1 = unpack_v8b_from_v32_S (loop_pos_pos);
 
       PUTCHAR_BE (largeblock, p + 0, byte0);
-      PUTCHAR_BE (largeblock, p + 1, byte1);
 
       loop_pos_pos++;
     }
@@ -187,10 +197,8 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
     for (u32 i = 0, p = pw_len * 2; i < 16; i++, p += iter_len)
     {
       const u8 byte0 = unpack_v8a_from_v32_S (loop_pos_pos);
-      const u8 byte1 = unpack_v8b_from_v32_S (loop_pos_pos);
 
       PUTCHAR_BE (largeblock, p + 0, byte0);
-      PUTCHAR_BE (largeblock, p + 1, byte1);
 
       loop_pos_pos++;
     }
