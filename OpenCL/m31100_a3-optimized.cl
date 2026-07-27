@@ -191,6 +191,31 @@ DECLSPEC void m31100s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
   const u32 w36 = SM3_EXPAND_S (w20, w27, w33, w23, w30);
   const u32 w39 = SM3_EXPAND_S (w23, w30, w36, w26, w33);
 
+  // The W0-dependent terms cancel from the P1 inputs of W29, W35, W41,
+  // W42, and W47.  Evaluate those inputs once from the W0=0 schedule and
+  // leave only their remaining variable terms in the candidate loop.
+  const u32 w29_p1e = SM3_P1_S (w[13] ^ w20 ^ hc_rotl32_S (w26, 15)) ^ w23;
+  const u32 w42_p1e = SM3_P1_S (w26   ^ w33 ^ hc_rotl32_S (w39, 15)) ^ w36;
+
+  const u32 w16_b = SM3_EXPAND_S (0,     w[ 7], w[13], w[ 3], w[10]);
+  const u32 w19_b = SM3_EXPAND_S (w[ 3], w[10], w16_b, w[ 6], w[13]);
+  const u32 w22_b = SM3_EXPAND_S (w[ 6], w[13], w19_b, w[ 9], w16_b);
+  const u32 w25_b = SM3_EXPAND_S (w[ 9], w16_b, w22_b, w[12], w19_b);
+  const u32 w29_b = w29_p1e ^ hc_rotl32_S (w16_b, 7);
+  const u32 w32_b = SM3_EXPAND_S (w16_b, w23,   w29_b, w19_b, w26);
+
+  const u32 w35_p1 = SM3_P1_S (w19_b ^ w26 ^ hc_rotl32_S (w32_b, 15));
+  const u32 w35_b  = w35_p1 ^ hc_rotl32_S (w22_b, 7) ^ w29_b;
+  const u32 w38_b  = SM3_EXPAND_S (w22_b, w29_b, w35_b, w25_b, w32_b);
+  const u32 w41_p1 = SM3_P1_S (w25_b ^ w32_b ^ hc_rotl32_S (w38_b, 15));
+
+  const u32 w28_b = SM3_EXPAND_S (w[12], w19_b, w25_b, w[15], w22_b);
+  const u32 w31_b = SM3_EXPAND_S (w[15], w22_b, w28_b, w18,   w25_b);
+  const u32 w41_b = w41_p1 ^ hc_rotl32_S (w28_b, 7) ^ w35_b;
+  const u32 w44_b = SM3_EXPAND_S (w28_b, w35_b, w41_b, w31_b, w38_b);
+
+  const u32 w47_p1 = SM3_P1_S (w31_b ^ w38_b ^ hc_rotl32_S (w44_b, 15));
+
   for (u32 il_pos = 0; il_pos < IL_CNT; il_pos += VECT_SIZE)
   {
     const u32x w0r = words_buf_r[il_pos / VECT_SIZE];
@@ -249,26 +274,26 @@ DECLSPEC void m31100s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
     wa_t = w26; SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T22, w6_t, w6_t ^ wa_t);
     wb_t = w27; SM3_ROUND2(b, c, d, a, f, g, h, e, SM3_T23, w7_t, w7_t ^ wb_t);
     wc_t = SM3_EXPAND(wc_t, w3_t, w9_t, wf_t, w6_t); SM3_ROUND2(a, b, c, d, e, f, g, h, SM3_T24, w8_t, w8_t ^ wc_t);
-    wd_t = SM3_EXPAND(wd_t, w4_t, wa_t, w0_t, w7_t); SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T25, w9_t, w9_t ^ wd_t);
+    wd_t = w29_p1e ^ hc_rotl32 (w0_t, 7); SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T25, w9_t, w9_t ^ wd_t);
     we_t = w30; SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T26, wa_t, wa_t ^ we_t);
     wf_t = SM3_EXPAND(wf_t, w6_t, wc_t, w2_t, w9_t); SM3_ROUND2(b, c, d, a, f, g, h, e, SM3_T27, wb_t, wb_t ^ wf_t);
     w0_t = SM3_EXPAND(w0_t, w7_t, wd_t, w3_t, wa_t); SM3_ROUND2(a, b, c, d, e, f, g, h, SM3_T28, wc_t, wc_t ^ w0_t);
     w1_t = w33; SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T29, wd_t, wd_t ^ w1_t);
     w2_t = SM3_EXPAND(w2_t, w9_t, wf_t, w5_t, wc_t); SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T30, we_t, we_t ^ w2_t);
-    w3_t = SM3_EXPAND(w3_t, wa_t, w0_t, w6_t, wd_t); SM3_ROUND2(b, c, d, a, f, g, h, e, SM3_T31, wf_t, wf_t ^ w3_t);
+    w3_t = w35_p1 ^ hc_rotl32 (w6_t, 7) ^ wd_t; SM3_ROUND2(b, c, d, a, f, g, h, e, SM3_T31, wf_t, wf_t ^ w3_t);
 
     w4_t = w36; SM3_ROUND2(a, b, c, d, e, f, g, h, SM3_T32, w0_t, w0_t ^ w4_t);
     w5_t = SM3_EXPAND(w5_t, wc_t, w2_t, w8_t, wf_t); SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T33, w1_t, w1_t ^ w5_t);
     w6_t = SM3_EXPAND(w6_t, wd_t, w3_t, w9_t, w0_t); SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T34, w2_t, w2_t ^ w6_t);
     w7_t = w39; SM3_ROUND2(b, c, d, a, f, g, h, e, SM3_T35, w3_t, w3_t ^ w7_t);
     w8_t = SM3_EXPAND(w8_t, wf_t, w5_t, wb_t, w2_t); SM3_ROUND2(a, b, c, d, e, f, g, h, SM3_T36, w4_t, w4_t ^ w8_t);
-    w9_t = SM3_EXPAND(w9_t, w0_t, w6_t, wc_t, w3_t); SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T37, w5_t, w5_t ^ w9_t);
-    wa_t = SM3_EXPAND(wa_t, w1_t, w7_t, wd_t, w4_t); SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T38, w6_t, w6_t ^ wa_t);
+    w9_t = w41_p1 ^ hc_rotl32 (wc_t, 7) ^ w3_t; SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T37, w5_t, w5_t ^ w9_t);
+    wa_t = w42_p1e ^ hc_rotl32 (wd_t, 7); SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T38, w6_t, w6_t ^ wa_t);
     wb_t = SM3_EXPAND(wb_t, w2_t, w8_t, we_t, w5_t); SM3_ROUND2(b, c, d, a, f, g, h, e, SM3_T39, w7_t, w7_t ^ wb_t);
     wc_t = SM3_EXPAND(wc_t, w3_t, w9_t, wf_t, w6_t); SM3_ROUND2(a, b, c, d, e, f, g, h, SM3_T40, w8_t, w8_t ^ wc_t);
     wd_t = SM3_EXPAND(wd_t, w4_t, wa_t, w0_t, w7_t); SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T41, w9_t, w9_t ^ wd_t);
     we_t = SM3_EXPAND(we_t, w5_t, wb_t, w1_t, w8_t); SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T42, wa_t, wa_t ^ we_t);
-    wf_t = SM3_EXPAND(wf_t, w6_t, wc_t, w2_t, w9_t); SM3_ROUND2(b, c, d, a, f, g, h, e, SM3_T43, wb_t, wb_t ^ wf_t);
+    wf_t = w47_p1 ^ hc_rotl32 (w2_t, 7) ^ w9_t; SM3_ROUND2(b, c, d, a, f, g, h, e, SM3_T43, wb_t, wb_t ^ wf_t);
     w0_t = SM3_EXPAND(w0_t, w7_t, wd_t, w3_t, wa_t); SM3_ROUND2(a, b, c, d, e, f, g, h, SM3_T44, wc_t, wc_t ^ w0_t);
     w1_t = SM3_EXPAND(w1_t, w8_t, we_t, w4_t, wb_t); SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T45, wd_t, wd_t ^ w1_t);
     w2_t = SM3_EXPAND(w2_t, w9_t, wf_t, w5_t, wc_t); SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T46, we_t, we_t ^ w2_t);
