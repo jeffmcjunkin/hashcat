@@ -260,14 +260,6 @@ DECLSPEC void rc4_init_104 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u3
   s_i = (j == idx) ? s_i : s_next;          \
 }
 
-#define RC4_KSA_FINAL_STEP(d)           \
-{                                      \
-  j += s_i + (d);                      \
-  const u8 s_j = GET_KEY8 (S, j, lid); \
-  SET_KEY8 (S, idx, s_j, lid);         \
-  SET_KEY8 (S, j, s_i, lid);           \
-}
-
 DECLSPEC void rc4_init_128 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u32 lid)
 {
   u32 v = 0x03020100;
@@ -282,12 +274,12 @@ DECLSPEC void rc4_init_128 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u3
   }
 
   u8 j = 0;
+  u8 s_i = GET_KEY8 (S, 0, lid);
 
   #pragma unroll 8
   for (u32 i = 0; i < 16; i++)
   {
     u8 idx = i * 16;
-    u8 s_i = GET_KEY8 (S, idx, lid);
 
     u32 v;
 
@@ -317,12 +309,11 @@ DECLSPEC void rc4_init_128 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u3
     RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
     RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
     RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
-    RC4_KSA_FINAL_STEP    (v8d_from_v32_S (v));
+    RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
   }
 }
 
 #undef RC4_KSA_PREFETCH_STEP
-#undef RC4_KSA_FINAL_STEP
 
 DECLSPEC void rc4_swap (LOCAL_AS u32 *S, const u8 i, const u8 j, const u32 lid)
 {
