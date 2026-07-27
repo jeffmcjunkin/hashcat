@@ -25,6 +25,24 @@
 
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
+#if defined IS_NV
+
+#define RAR3_COUNTER_0(i,w) hc_byte_perm_S ((i), (w), 0x0124)
+#define RAR3_COUNTER_1(i,w) hc_byte_perm_S ((i), (w), 0x7012)
+#define RAR3_COUNTER_2(i,w) hc_byte_perm_S ((i), (w), 0x7601)
+#define RAR3_COUNTER_3(i,w) hc_byte_perm_S ((i), (w), 0x7650)
+#define RAR3_COUNTER_4(i,w) hc_byte_perm_S ((i), (w), 0x1254)
+
+#else
+
+#define RAR3_COUNTER_0(i,w) ((w) | iter_s)
+#define RAR3_COUNTER_1(i,w) ((w) | (iter_s >>  8))
+#define RAR3_COUNTER_2(i,w) ((w) | (iter_s >> 16))
+#define RAR3_COUNTER_3(i,w) ((w) | (iter_s >> 24))
+#define RAR3_COUNTER_4(i,w) ((w) | (iter_s <<  8))
+
+#endif
+
 typedef struct rar3_tmp
 {
   u32 dgst[17][5];
@@ -164,153 +182,157 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
 
       while (k < 64)
       {
+        #if !defined IS_NV
+
         const u32 iter_s = hc_swap32_S (iter);
+
+        #endif
 
         switch (k)
         {
-          case  0: w[ 0] |= iter_s;
+          case  0: w[ 0] = RAR3_COUNTER_0 (iter, w[ 0]);
                    break;
-          case  1: w[ 0] |= iter_s >>  8;
+          case  1: w[ 0] = RAR3_COUNTER_1 (iter, w[ 0]);
                    break;
-          case  2: w[ 0] |= iter_s >> 16;
+          case  2: w[ 0] = RAR3_COUNTER_2 (iter, w[ 0]);
                    break;
-          case  3: w[ 0] |= iter_s >> 24;
-                   w[ 1] |= iter_s <<  8;
+          case  3: w[ 0] = RAR3_COUNTER_3 (iter, w[ 0]);
+                   w[ 1] = RAR3_COUNTER_4 (iter, w[ 1]);
                    break;
-          case  4: w[ 1] |= iter_s;
+          case  4: w[ 1] = RAR3_COUNTER_0 (iter, w[ 1]);
                    break;
-          case  5: w[ 1] |= iter_s >>  8;
+          case  5: w[ 1] = RAR3_COUNTER_1 (iter, w[ 1]);
                    break;
-          case  6: w[ 1] |= iter_s >> 16;
+          case  6: w[ 1] = RAR3_COUNTER_2 (iter, w[ 1]);
                    break;
-          case  7: w[ 1] |= iter_s >> 24;
-                   w[ 2] |= iter_s <<  8;
+          case  7: w[ 1] = RAR3_COUNTER_3 (iter, w[ 1]);
+                   w[ 2] = RAR3_COUNTER_4 (iter, w[ 2]);
                    break;
-          case  8: w[ 2] |= iter_s;
+          case  8: w[ 2] = RAR3_COUNTER_0 (iter, w[ 2]);
                    break;
-          case  9: w[ 2] |= iter_s >>  8;
+          case  9: w[ 2] = RAR3_COUNTER_1 (iter, w[ 2]);
                    break;
-          case 10: w[ 2] |= iter_s >> 16;
+          case 10: w[ 2] = RAR3_COUNTER_2 (iter, w[ 2]);
                    break;
-          case 11: w[ 2] |= iter_s >> 24;
-                   w[ 3] |= iter_s <<  8;
+          case 11: w[ 2] = RAR3_COUNTER_3 (iter, w[ 2]);
+                   w[ 3] = RAR3_COUNTER_4 (iter, w[ 3]);
                    break;
-          case 12: w[ 3] |= iter_s;
+          case 12: w[ 3] = RAR3_COUNTER_0 (iter, w[ 3]);
                    break;
-          case 13: w[ 3] |= iter_s >>  8;
+          case 13: w[ 3] = RAR3_COUNTER_1 (iter, w[ 3]);
                    break;
-          case 14: w[ 3] |= iter_s >> 16;
+          case 14: w[ 3] = RAR3_COUNTER_2 (iter, w[ 3]);
                    break;
-          case 15: w[ 3] |= iter_s >> 24;
-                   w[ 4] |= iter_s <<  8;
+          case 15: w[ 3] = RAR3_COUNTER_3 (iter, w[ 3]);
+                   w[ 4] = RAR3_COUNTER_4 (iter, w[ 4]);
                    break;
-          case 16: w[ 4] |= iter_s;
+          case 16: w[ 4] = RAR3_COUNTER_0 (iter, w[ 4]);
                    break;
-          case 17: w[ 4] |= iter_s >>  8;
+          case 17: w[ 4] = RAR3_COUNTER_1 (iter, w[ 4]);
                    break;
-          case 18: w[ 4] |= iter_s >> 16;
+          case 18: w[ 4] = RAR3_COUNTER_2 (iter, w[ 4]);
                    break;
-          case 19: w[ 4] |= iter_s >> 24;
-                   w[ 5] |= iter_s <<  8;
+          case 19: w[ 4] = RAR3_COUNTER_3 (iter, w[ 4]);
+                   w[ 5] = RAR3_COUNTER_4 (iter, w[ 5]);
                    break;
-          case 20: w[ 5] |= iter_s;
+          case 20: w[ 5] = RAR3_COUNTER_0 (iter, w[ 5]);
                    break;
-          case 21: w[ 5] |= iter_s >>  8;
+          case 21: w[ 5] = RAR3_COUNTER_1 (iter, w[ 5]);
                    break;
-          case 22: w[ 5] |= iter_s >> 16;
+          case 22: w[ 5] = RAR3_COUNTER_2 (iter, w[ 5]);
                    break;
-          case 23: w[ 5] |= iter_s >> 24;
-                   w[ 6] |= iter_s <<  8;
+          case 23: w[ 5] = RAR3_COUNTER_3 (iter, w[ 5]);
+                   w[ 6] = RAR3_COUNTER_4 (iter, w[ 6]);
                    break;
-          case 24: w[ 6] |= iter_s;
+          case 24: w[ 6] = RAR3_COUNTER_0 (iter, w[ 6]);
                    break;
-          case 25: w[ 6] |= iter_s >>  8;
+          case 25: w[ 6] = RAR3_COUNTER_1 (iter, w[ 6]);
                    break;
-          case 26: w[ 6] |= iter_s >> 16;
+          case 26: w[ 6] = RAR3_COUNTER_2 (iter, w[ 6]);
                    break;
-          case 27: w[ 6] |= iter_s >> 24;
-                   w[ 7] |= iter_s <<  8;
+          case 27: w[ 6] = RAR3_COUNTER_3 (iter, w[ 6]);
+                   w[ 7] = RAR3_COUNTER_4 (iter, w[ 7]);
                    break;
-          case 28: w[ 7] |= iter_s;
+          case 28: w[ 7] = RAR3_COUNTER_0 (iter, w[ 7]);
                    break;
-          case 29: w[ 7] |= iter_s >>  8;
+          case 29: w[ 7] = RAR3_COUNTER_1 (iter, w[ 7]);
                    break;
-          case 30: w[ 7] |= iter_s >> 16;
+          case 30: w[ 7] = RAR3_COUNTER_2 (iter, w[ 7]);
                    break;
-          case 31: w[ 7] |= iter_s >> 24;
-                   w[ 8] |= iter_s <<  8;
+          case 31: w[ 7] = RAR3_COUNTER_3 (iter, w[ 7]);
+                   w[ 8] = RAR3_COUNTER_4 (iter, w[ 8]);
                    break;
-          case 32: w[ 8] |= iter_s;
+          case 32: w[ 8] = RAR3_COUNTER_0 (iter, w[ 8]);
                    break;
-          case 33: w[ 8] |= iter_s >>  8;
+          case 33: w[ 8] = RAR3_COUNTER_1 (iter, w[ 8]);
                    break;
-          case 34: w[ 8] |= iter_s >> 16;
+          case 34: w[ 8] = RAR3_COUNTER_2 (iter, w[ 8]);
                    break;
-          case 35: w[ 8] |= iter_s >> 24;
-                   w[ 9] |= iter_s <<  8;
+          case 35: w[ 8] = RAR3_COUNTER_3 (iter, w[ 8]);
+                   w[ 9] = RAR3_COUNTER_4 (iter, w[ 9]);
                    break;
-          case 36: w[ 9] |= iter_s;
+          case 36: w[ 9] = RAR3_COUNTER_0 (iter, w[ 9]);
                    break;
-          case 37: w[ 9] |= iter_s >>  8;
+          case 37: w[ 9] = RAR3_COUNTER_1 (iter, w[ 9]);
                    break;
-          case 38: w[ 9] |= iter_s >> 16;
+          case 38: w[ 9] = RAR3_COUNTER_2 (iter, w[ 9]);
                    break;
-          case 39: w[ 9] |= iter_s >> 24;
-                   w[10] |= iter_s <<  8;
+          case 39: w[ 9] = RAR3_COUNTER_3 (iter, w[ 9]);
+                   w[10] = RAR3_COUNTER_4 (iter, w[10]);
                    break;
-          case 40: w[10] |= iter_s;
+          case 40: w[10] = RAR3_COUNTER_0 (iter, w[10]);
                    break;
-          case 41: w[10] |= iter_s >>  8;
+          case 41: w[10] = RAR3_COUNTER_1 (iter, w[10]);
                    break;
-          case 42: w[10] |= iter_s >> 16;
+          case 42: w[10] = RAR3_COUNTER_2 (iter, w[10]);
                    break;
-          case 43: w[10] |= iter_s >> 24;
-                   w[11] |= iter_s <<  8;
+          case 43: w[10] = RAR3_COUNTER_3 (iter, w[10]);
+                   w[11] = RAR3_COUNTER_4 (iter, w[11]);
                    break;
-          case 44: w[11] |= iter_s;
+          case 44: w[11] = RAR3_COUNTER_0 (iter, w[11]);
                    break;
-          case 45: w[11] |= iter_s >>  8;
+          case 45: w[11] = RAR3_COUNTER_1 (iter, w[11]);
                    break;
-          case 46: w[11] |= iter_s >> 16;
+          case 46: w[11] = RAR3_COUNTER_2 (iter, w[11]);
                    break;
-          case 47: w[11] |= iter_s >> 24;
-                   w[12] |= iter_s <<  8;
+          case 47: w[11] = RAR3_COUNTER_3 (iter, w[11]);
+                   w[12] = RAR3_COUNTER_4 (iter, w[12]);
                    break;
-          case 48: w[12] |= iter_s;
+          case 48: w[12] = RAR3_COUNTER_0 (iter, w[12]);
                    break;
-          case 49: w[12] |= iter_s >>  8;
+          case 49: w[12] = RAR3_COUNTER_1 (iter, w[12]);
                    break;
-          case 50: w[12] |= iter_s >> 16;
+          case 50: w[12] = RAR3_COUNTER_2 (iter, w[12]);
                    break;
-          case 51: w[12] |= iter_s >> 24;
-                   w[13] |= iter_s <<  8;
+          case 51: w[12] = RAR3_COUNTER_3 (iter, w[12]);
+                   w[13] = RAR3_COUNTER_4 (iter, w[13]);
                    break;
-          case 52: w[13] |= iter_s;
+          case 52: w[13] = RAR3_COUNTER_0 (iter, w[13]);
                    break;
-          case 53: w[13] |= iter_s >>  8;
+          case 53: w[13] = RAR3_COUNTER_1 (iter, w[13]);
                    break;
-          case 54: w[13] |= iter_s >> 16;
+          case 54: w[13] = RAR3_COUNTER_2 (iter, w[13]);
                    break;
-          case 55: w[13] |= iter_s >> 24;
-                   w[14] |= iter_s <<  8;
+          case 55: w[13] = RAR3_COUNTER_3 (iter, w[13]);
+                   w[14] = RAR3_COUNTER_4 (iter, w[14]);
                    break;
-          case 56: w[14] |= iter_s;
+          case 56: w[14] = RAR3_COUNTER_0 (iter, w[14]);
                    break;
-          case 57: w[14] |= iter_s >>  8;
+          case 57: w[14] = RAR3_COUNTER_1 (iter, w[14]);
                    break;
-          case 58: w[14] |= iter_s >> 16;
+          case 58: w[14] = RAR3_COUNTER_2 (iter, w[14]);
                    break;
-          case 59: w[14] |= iter_s >> 24;
-                   w[15] |= iter_s <<  8;
+          case 59: w[14] = RAR3_COUNTER_3 (iter, w[14]);
+                   w[15] = RAR3_COUNTER_4 (iter, w[15]);
                    break;
-          case 60: w[15] |= iter_s;
+          case 60: w[15] = RAR3_COUNTER_0 (iter, w[15]);
                    break;
-          case 61: w[15] |= iter_s >>  8;
+          case 61: w[15] = RAR3_COUNTER_1 (iter, w[15]);
                    break;
-          case 62: w[15] |= iter_s >> 16;
+          case 62: w[15] = RAR3_COUNTER_2 (iter, w[15]);
                    break;
-          case 63: w[15] |= iter_s >> 24;
-                   tmp = iter_s << 8;
+          case 63: w[15] = RAR3_COUNTER_3 (iter, w[15]);
+                   tmp   = RAR3_COUNTER_4 (iter, tmp);
                    break;
         }
 
