@@ -1700,12 +1700,10 @@ DECLSPEC u32 DES (const u32 target, const u32 early_reject, const u32 K00, const
     #if defined IS_NV && CUDA_ARCH >= 500
     if (i && early_reject)
     {
-      s1_early (*D63 ^ k00, *D32 ^ k01, *D33 ^ k02, *D34 ^ k03, *D35 ^ k04, *D36 ^ k05, D08);
       s2_early (*D35 ^ k06, *D36 ^ k07, *D37 ^ k08, *D38 ^ k09, *D39 ^ k10, *D40 ^ k11, D12, D01);
       s3       (*D39 ^ k12, *D40 ^ k13, *D41 ^ k14, *D42 ^ k15, *D43 ^ k16, *D44 ^ k17, D23, D15, D29, D05);
       s4_early (*D43 ^ k18, *D44 ^ k19, *D45 ^ k20, *D46 ^ k21, *D47 ^ k22, *D48 ^ k23, D09, D00);
       s5       (*D47 ^ k24, *D48 ^ k25, *D49 ^ k26, *D50 ^ k27, *D51 ^ k28, *D52 ^ k29, D07, D13, D24, D02);
-      s6_early (*D51 ^ k30, *D52 ^ k31, *D53 ^ k32, *D54 ^ k33, *D55 ^ k34, *D56 ^ k35, D03, D10);
     }
     else
     #endif
@@ -1723,28 +1721,32 @@ DECLSPEC u32 DES (const u32 target, const u32 early_reject, const u32 K00, const
       tmpResult |= *D00 ^ (((target >>  0) & 1) ? -1 : 0);
       tmpResult |= *D01 ^ (((target >>  1) & 1) ? -1 : 0);
       tmpResult |= *D02 ^ (((target >>  2) & 1) ? -1 : 0);
-      tmpResult |= *D03 ^ (((target >>  3) & 1) ? -1 : 0);
       tmpResult |= *D05 ^ (((target >>  5) & 1) ? -1 : 0);
       tmpResult |= *D07 ^ (((target >>  7) & 1) ? -1 : 0);
-      tmpResult |= *D08 ^ (((target >>  8) & 1) ? -1 : 0);
       tmpResult |= *D09 ^ (((target >>  9) & 1) ? -1 : 0);
-      tmpResult |= *D10 ^ (((target >> 10) & 1) ? -1 : 0);
       tmpResult |= *D12 ^ (((target >> 12) & 1) ? -1 : 0);
       tmpResult |= *D13 ^ (((target >> 13) & 1) ? -1 : 0);
       tmpResult |= *D15 ^ (((target >> 15) & 1) ? -1 : 0);
+      tmpResult |= *D23 ^ (((target >> 23) & 1) ? -1 : 0);
+      tmpResult |= *D24 ^ (((target >> 24) & 1) ? -1 : 0);
+      tmpResult |= *D29 ^ (((target >> 29) & 1) ? -1 : 0);
 
       if (tmpResult == 0xffffffff) return tmpResult;
 
       #if defined IS_NV && CUDA_ARCH >= 500
       s1       (*D63 ^ k00, *D32 ^ k01, *D33 ^ k02, *D34 ^ k03, *D35 ^ k04, *D36 ^ k05, D08, D16, D22, D30);
-      s1_early (*D63 ^ k00, *D32 ^ k01, *D33 ^ k02, *D34 ^ k03, *D35 ^ k04, *D36 ^ k05, D08);
       s2       (*D35 ^ k06, *D36 ^ k07, *D37 ^ k08, *D38 ^ k09, *D39 ^ k10, *D40 ^ k11, D12, D27, D01, D17);
       s2_early (*D35 ^ k06, *D36 ^ k07, *D37 ^ k08, *D38 ^ k09, *D39 ^ k10, *D40 ^ k11, D12, D01);
       s4       (*D43 ^ k18, *D44 ^ k19, *D45 ^ k20, *D46 ^ k21, *D47 ^ k22, *D48 ^ k23, D25, D19, D09, D00);
       s4_early (*D43 ^ k18, *D44 ^ k19, *D45 ^ k20, *D46 ^ k21, *D47 ^ k22, *D48 ^ k23, D09, D00);
       s6       (*D51 ^ k30, *D52 ^ k31, *D53 ^ k32, *D54 ^ k33, *D55 ^ k34, *D56 ^ k35, D03, D28, D10, D18);
-      s6_early (*D51 ^ k30, *D52 ^ k31, *D53 ^ k32, *D54 ^ k33, *D55 ^ k34, *D56 ^ k35, D03, D10);
       #endif
+
+      tmpResult |= *D03 ^ (((target >>  3) & 1) ? -1 : 0);
+      tmpResult |= *D08 ^ (((target >>  8) & 1) ? -1 : 0);
+      tmpResult |= *D10 ^ (((target >> 10) & 1) ? -1 : 0);
+
+      if (tmpResult == 0xffffffff) return tmpResult;
     }
 
     s7(*D55 ^ k36, *D56 ^ k37, *D57 ^ k38, *D58 ^ k39, *D59 ^ k40, *D60 ^ k41, D31, D11, D21, D06);
@@ -2293,13 +2295,10 @@ KERNEL_FQ KERNEL_FA void m03000_sxx (KERN_ATTR_BITSLICE ())
   const u32 S20 = (((s0 >> 20) & 1) ? -1 : 0);
   const u32 S21 = (((s0 >> 21) & 1) ? -1 : 0);
   const u32 S22 = (((s0 >> 22) & 1) ? -1 : 0);
-  const u32 S23 = (((s0 >> 23) & 1) ? -1 : 0);
-  const u32 S24 = (((s0 >> 24) & 1) ? -1 : 0);
   const u32 S25 = (((s0 >> 25) & 1) ? -1 : 0);
   const u32 S26 = (((s0 >> 26) & 1) ? -1 : 0);
   const u32 S27 = (((s0 >> 27) & 1) ? -1 : 0);
   const u32 S28 = (((s0 >> 28) & 1) ? -1 : 0);
-  const u32 S29 = (((s0 >> 29) & 1) ? -1 : 0);
   const u32 S30 = (((s0 >> 30) & 1) ? -1 : 0);
   const u32 S31 = (((s0 >> 31) & 1) ? -1 : 0);
   const u32 S32 = (((s1 >>  0) & 1) ? -1 : 0);
@@ -2570,13 +2569,10 @@ KERNEL_FQ KERNEL_FA void m03000_sxx (KERN_ATTR_BITSLICE ())
     tmpResult |= D20 ^ S20;
     tmpResult |= D21 ^ S21;
     tmpResult |= D22 ^ S22;
-    tmpResult |= D23 ^ S23;
-    tmpResult |= D24 ^ S24;
     tmpResult |= D25 ^ S25;
     tmpResult |= D26 ^ S26;
     tmpResult |= D27 ^ S27;
     tmpResult |= D28 ^ S28;
-    tmpResult |= D29 ^ S29;
     tmpResult |= D30 ^ S30;
     tmpResult |= D31 ^ S31;
 
