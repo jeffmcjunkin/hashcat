@@ -69,6 +69,10 @@ DECLSPEC void salsa_r (PRIVATE_AS u32 *TI)
 
     for (int j = 0; j < SALSA_CNT4; j++) TI[i + j] = TT[j];
 
+    #if defined IS_CUDA
+    #pragma unroll 1
+    #endif
+
     for (int r = 0; r < 4; r++)
     {
       u32 t0, t1, t2, t3;
