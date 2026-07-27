@@ -35,7 +35,7 @@ KERNEL_FQ KERNEL_FA void m09800_m04 (KERN_ATTR_ESALT (oldoffice34_t))
    * modifier
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
 
   /**
    * base
@@ -374,7 +374,7 @@ KERNEL_FQ KERNEL_FA void m09800_s04 (KERN_ATTR_ESALT (oldoffice34_t))
    * modifier
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
 
   /**
    * base

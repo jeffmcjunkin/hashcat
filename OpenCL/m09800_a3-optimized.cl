@@ -543,7 +543,7 @@ KERNEL_FQ KERNEL_FA void m09800_m04 (KERN_ATTR_ESALT (oldoffice34_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
@@ -594,7 +594,7 @@ KERNEL_FQ KERNEL_FA void m09800_m08 (KERN_ATTR_ESALT (oldoffice34_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
@@ -645,7 +645,7 @@ KERNEL_FQ KERNEL_FA void m09800_m16 (KERN_ATTR_ESALT (oldoffice34_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
@@ -696,7 +696,7 @@ KERNEL_FQ KERNEL_FA void m09800_s04 (KERN_ATTR_ESALT (oldoffice34_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
@@ -747,7 +747,7 @@ KERNEL_FQ KERNEL_FA void m09800_s08 (KERN_ATTR_ESALT (oldoffice34_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
@@ -798,7 +798,7 @@ KERNEL_FQ KERNEL_FA void m09800_s16 (KERN_ATTR_ESALT (oldoffice34_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
