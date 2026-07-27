@@ -199,7 +199,7 @@ DECLSPEC void scrypt_smix_init (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, GLOBAL_AS v
   for (u32 i = 0; i < STATE_CNT4; i++) P[i] = X[i];
 }
 
-DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 * SCRYPT_RESTRICT X, PRIVATE_AS u32 * SCRYPT_RESTRICT T, GLOBAL_AS void *V0, GLOBAL_AS void *V1, GLOBAL_AS void *V2, GLOBAL_AS void *V3, const u32 gid, const u32 lid, const u32 lsz, const u32 bid)
+DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 * SCRYPT_RESTRICT X, PRIVATE_AS u32 * SCRYPT_RESTRICT T, GLOBAL_AS const void *V0, GLOBAL_AS const void *V1, GLOBAL_AS const void *V2, GLOBAL_AS const void *V3, const u32 gid, const u32 lid, const u32 lsz, const u32 bid)
 {
   const u32 ySIZE = SCRYPT_N >> SCRYPT_TMTO;
   const u32 zSIZE = STATE_CNT44;
@@ -210,17 +210,17 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 * SCRYPT_RESTRI
   PRIVATE_AS hc_uint4_t *X4 = (PRIVATE_AS hc_uint4_t *) X;
   PRIVATE_AS hc_uint4_t *T4 = (PRIVATE_AS hc_uint4_t *) T;
 
-  GLOBAL_AS hc_uint4_t *V;
+  GLOBAL_AS const hc_uint4_t *V;
 
   switch (xm4)
   {
-    case 0: V = (GLOBAL_AS hc_uint4_t *) V0; break;
-    case 1: V = (GLOBAL_AS hc_uint4_t *) V1; break;
-    case 2: V = (GLOBAL_AS hc_uint4_t *) V2; break;
-    case 3: V = (GLOBAL_AS hc_uint4_t *) V3; break;
+    case 0: V = (GLOBAL_AS const hc_uint4_t *) V0; break;
+    case 1: V = (GLOBAL_AS const hc_uint4_t *) V1; break;
+    case 2: V = (GLOBAL_AS const hc_uint4_t *) V2; break;
+    case 3: V = (GLOBAL_AS const hc_uint4_t *) V3; break;
   }
 
-  GLOBAL_AS hc_uint4_t *Vx = V + (xd4 * lsz * ySIZE * zSIZE) + (lid * ySIZE * zSIZE);
+  GLOBAL_AS const hc_uint4_t *Vx = V + (xd4 * lsz * ySIZE * zSIZE) + (lid * ySIZE * zSIZE);
 
   for (u32 i = 0; i < STATE_CNT4; i++) X[i] = P[i];
 
@@ -236,7 +236,7 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 * SCRYPT_RESTRI
 
     const u32 km = k - (y << SCRYPT_TMTO);
 
-    GLOBAL_AS hc_uint4_t *Vxx = Vx + (y * zSIZE);
+    GLOBAL_AS const hc_uint4_t *Vxx = Vx + (y * zSIZE);
 
     for (u32 z = 0; z < zSIZE; z++) T4[z] = *Vxx++;
 
