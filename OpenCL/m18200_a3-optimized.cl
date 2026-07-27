@@ -112,6 +112,124 @@ DECLSPEC void hmac_md5_run (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u
   md5_transform (w0, w1, w2, w3, digest);
 }
 
+DECLSPEC void rc4_init_128_virtual4 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u64 lid)
+{
+  u32 v = 0x03020100;
+  u32 a = 0x04040404;
+
+  #ifdef _unroll
+  #pragma unroll
+  #endif
+  for (u8 i = 0; i < 64; i++)
+  {
+    SET_KEY32 (S, i, v, lid); v += a;
+  }
+
+  v = key[0];
+
+  const u8 d0 = v8a_from_v32_S (v);
+  const u8 d1 = v8b_from_v32_S (v);
+  const u8 d2 = v8c_from_v32_S (v);
+  const u8 d3 = v8d_from_v32_S (v);
+
+  // The first four swaps start from the identity permutation. Track their
+  // sparse updates in registers, then commit them in program order.
+
+  const u8 j0 = d0;
+
+  const u8 s1  = (j0 == 1) ? 0 : 1;
+  const u8 j1  = j0 + s1 + d1;
+  const u8 sj1 = (j1 == j0) ? 0 : ((j1 == 0) ? j0 : j1);
+
+  const u8 s2  = (j1 == 2) ? s1 : ((j0 == 2) ? 0 : 2);
+  const u8 j2  = j1 + s2 + d2;
+  const u8 sj2 = (j2 == j1) ? s1
+               : (j2 == 1)  ? sj1
+               : (j2 == j0) ? 0
+               : (j2 == 0)  ? j0
+               : j2;
+
+  const u8 s3  = (j2 == 3) ? s2
+               : (j1 == 3) ? s1
+               : (j0 == 3) ? 0
+               : 3;
+  const u8 j3  = j2 + s3 + d3;
+  const u8 sj3 = (j3 == j2) ? s2
+               : (j3 == 2)  ? sj2
+               : (j3 == j1) ? s1
+               : (j3 == 1)  ? sj1
+               : (j3 == j0) ? 0
+               : (j3 == 0)  ? j0
+               : j3;
+
+  SET_KEY8 (S,  0,  j0, lid);
+  SET_KEY8 (S, j0,   0, lid);
+  SET_KEY8 (S,  1, sj1, lid);
+  SET_KEY8 (S, j1,  s1, lid);
+  SET_KEY8 (S,  2, sj2, lid);
+  SET_KEY8 (S, j2,  s2, lid);
+  SET_KEY8 (S,  3, sj3, lid);
+  SET_KEY8 (S, j3,  s3, lid);
+
+  u8 j = j3;
+
+  u8 idx = 4;
+
+  v = key[1];
+
+  j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+
+  v = key[2];
+
+  j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+
+  v = key[3];
+
+  j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+
+  for (u32 i = 1; i < 16; i++)
+  {
+    idx = i * 16;
+
+    v = key[0];
+
+    j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+
+    v = key[1];
+
+    j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+
+    v = key[2];
+
+    j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+
+    v = key[3];
+
+    j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  }
+}
+
 DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 edata2_3, const u64 lid)
 {
   u8 a = 0;
@@ -528,7 +646,7 @@ DECLSPEC void m18200 (LOCAL_AS u32 *S, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, P
     tmp[2] = digest[2];
     tmp[3] = digest[3];
 
-    rc4_init_128 (S, tmp, lid);
+    rc4_init_128_virtual4 (S, tmp, lid);
 
     if (asrep_early_check (S, edata2_2, edata2_3, lid) == 0) continue;
 
