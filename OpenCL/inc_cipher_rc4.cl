@@ -331,6 +331,66 @@ DECLSPEC void rc4_dropN (LOCAL_AS u32 *S, PRIVATE_AS u8 *i, PRIVATE_AS u8 *j, co
   *j = b;
 }
 
+DECLSPEC u8 rc4_next_4 (LOCAL_AS u32 *S, const u8 i, const u8 j, PRIVATE_AS const u32 *in, PRIVATE_AS u32 *out, const u32 lid)
+{
+  u8 a = i;
+  u8 b = j;
+
+  u32 xor4 = 0;
+
+  u32 tmp;
+
+  u8 idx;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp <<  0;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp <<  8;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp << 16;
+
+  a += 1;
+  b += GET_KEY8 (S, a, lid);
+
+  rc4_swap (S, a, b, lid);
+
+  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+
+  tmp = GET_KEY8 (S, idx, lid);
+
+  xor4 |= tmp << 24;
+
+  out[0] = in[0] ^ xor4;
+
+  return b;
+}
+
 DECLSPEC u8 rc4_next_16 (LOCAL_AS u32 *S, const u8 i, const u8 j, PRIVATE_AS const u32 *in, PRIVATE_AS u32 *out, const u32 lid)
 {
   u8 a = i;
