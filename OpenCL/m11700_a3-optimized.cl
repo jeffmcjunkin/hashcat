@@ -149,7 +149,7 @@ DECLSPEC void streebog_g (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOCAL_AS
 // COMPARE). The 12th (last) round therefore needs to produce only output words 0 and 1 of
 // the s- and k-chains instead of all 8, which the rolled round loop above cannot prune on
 // its own. Value-identical for h[0..1]; drops 2*6*8 = 96 shared s-box loads per candidate.
-DECLSPEC void streebog_g_last (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOCAL_AS u64 (*s_sbob_sl64)[256])
+DECLSPEC bool streebog_g_last (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOCAL_AS u64 (*s_sbob_sl64)[256], const bool early_reject, const u32 search0)
 {
   u64x k[8];
   u64x s[8];
@@ -231,6 +231,32 @@ DECLSPEC void streebog_g_last (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOC
 
   // Final round (r == 11): only output words 0 and 1 are needed downstream.
 
+  // Single-target kernels can reject almost every candidate using just the low
+  // half of output word 0.  Use 32-bit table loads for that half and avoid the
+  // remaining final-round outputs unless at least one SIMD lane still matches.
+
+  if (early_reject == true)
+  {
+    for (int i = 0; i < 8; i++)
+    {
+      t[i] = (u64x) (sl[i] ^ kl[i]);
+    }
+
+    const int i = 0;
+
+    const u32x sf0l = SBOG_LPSti32;
+
+    for (int j = 0; j < 8; j++)
+    {
+      t[j] = (u64x) (kl[j] ^ ((u32) sbob256_rc64[11][j]));
+    }
+
+    const u32x kf0l = SBOG_LPSti32;
+    const u32x r0    = l32_from_64 (h[0]) ^ sf0l ^ kf0l ^ l32_from_64 (m[0]);
+
+    if (MATCHES_NONE_VS (r0, search0)) return false;
+  }
+
   for (int i = 0; i < 8; i++)
   {
     t[i] = (u64x) (sl[i] ^ kl[i]);
@@ -257,6 +283,8 @@ DECLSPEC void streebog_g_last (PRIVATE_AS u64x *h, PRIVATE_AS const u64x *m, LOC
 
   h[0] ^= sf[0] ^ kf[0] ^ m[0];
   h[1] ^= sf[1] ^ kf[1] ^ m[1];
+
+  return true;
 }
 
 DECLSPEC void m11700m (LOCAL_AS u64 (*s_sbob_sl64)[256], PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_BASIC ())
@@ -339,7 +367,7 @@ DECLSPEC void m11700m (LOCAL_AS u64 (*s_sbob_sl64)[256], PRIVATE_AS u32 *w, cons
     m[6] = hc_swap64 (hl32_to_64 (w[ 3], w[ 2]));
     m[7] = hc_swap64 (hl32_to_64 (w[ 1], w0lr ));
 
-    streebog_g_last (h, m, s_sbob_sl64);
+    streebog_g_last (h, m, s_sbob_sl64, false, 0);
 
     const u32x r0 = l32_from_64 (h[0]);
     const u32x r1 = h32_from_64 (h[0]);
@@ -442,7 +470,7 @@ DECLSPEC void m11700s (LOCAL_AS u64 (*s_sbob_sl64)[256], PRIVATE_AS u32 *w, cons
     m[6] = hc_swap64 (hl32_to_64 (w[ 3], w[ 2]));
     m[7] = hc_swap64 (hl32_to_64 (w[ 1], w0lr ));
 
-    streebog_g_last (h, m, s_sbob_sl64);
+    if (streebog_g_last (h, m, s_sbob_sl64, true, search[0]) == false) continue;
 
     const u32x r0 = l32_from_64 (h[0]);
     const u32x r1 = h32_from_64 (h[0]);
