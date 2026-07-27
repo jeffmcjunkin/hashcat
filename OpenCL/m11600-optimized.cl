@@ -78,21 +78,22 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
 
   const u32 pw_len = MIN (pws[gid].pw_len, 20);
   const u32 iter_len = (pw_len * 2) + 8;
-  const u32 iter32   = iter_len / 2;
+  const u32 iter16   = iter_len / 4;
+  const u32 chunk_words = iter_len * 4;
 
-  // this is large enough to hold all possible w[] arrays for 32 iterations
+  // this is large enough to hold all possible w[] arrays for 16 iterations
 
-  #define LARGEBLOCK_ELEMS ((20 + 4) * 16)
+  #define LARGEBLOCK_ELEMS ((10 + 2) * 16)
 
   u32 largeblock[LARGEBLOCK_ELEMS];
 
   PRIVATE_AS u8 *ptr = (PRIVATE_AS u8 *) largeblock;
 
-  for (u32 i = 0; i < iter32 * 16; i++) largeblock[i] = 0;
+  for (u32 i = 0; i < chunk_words; i++) largeblock[i] = 0;
 
   u32 loop_pos_pos = LOOP_POS;
 
-  for (u32 i = 0, p = 0; i < 32; i++)
+  for (u32 i = 0, p = 0; i < 16; i++)
   {
     for (u32 j = 0; j < pw_len; j++, p += 2)
     {
@@ -121,13 +122,18 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
   h[6] = tmps[gid].h[6];
   h[7] = tmps[gid].h[7];
 
+  u32 w0[4];
+  u32 w1[4];
+  u32 w2[4];
+  u32 w3[4];
+
   loop_pos_pos = LOOP_POS;
 
   for (u32 i = 0; i < LOOP_CNT; i += 32)
   {
-    // iteration set
+    // first iteration set
     #pragma unroll
-    for (u32 i = 0, p = pw_len * 2; i < 32; i++, p += iter_len)
+    for (u32 i = 0, p = pw_len * 2; i < 16; i++, p += iter_len)
     {
       const u8 byte0 = unpack_v8a_from_v32_S (loop_pos_pos);
       const u8 byte1 = unpack_v8b_from_v32_S (loop_pos_pos);
@@ -138,14 +144,78 @@ KERNEL_FQ KERNEL_FA void m11600_loop (KERN_ATTR_TMPS_HOOKS (seven_zip_tmp_t, sev
       loop_pos_pos++;
     }
 
-    // full 64 byte buffer
-    for (int j = 0, j16 = 0; j < iter32; j++, j16 += 16)
+    // full 64 byte buffers from the first set
+    for (int j = 0, j16 = 0; j < iter16; j++, j16 += 16)
     {
-      u32 w0[4];
-      u32 w1[4];
-      u32 w2[4];
-      u32 w3[4];
+      w0[0] = largeblock[j16 +  0];
+      w0[1] = largeblock[j16 +  1];
+      w0[2] = largeblock[j16 +  2];
+      w0[3] = largeblock[j16 +  3];
+      w1[0] = largeblock[j16 +  4];
+      w1[1] = largeblock[j16 +  5];
+      w1[2] = largeblock[j16 +  6];
+      w1[3] = largeblock[j16 +  7];
+      w2[0] = largeblock[j16 +  8];
+      w2[1] = largeblock[j16 +  9];
+      w2[2] = largeblock[j16 + 10];
+      w2[3] = largeblock[j16 + 11];
+      w3[0] = largeblock[j16 + 12];
+      w3[1] = largeblock[j16 + 13];
+      w3[2] = largeblock[j16 + 14];
+      w3[3] = largeblock[j16 + 15];
 
+      sha256_transform (w0, w1, w2, w3, h);
+    }
+
+    // odd password lengths leave half a SHA256 block between the two sets
+    if (pw_len & 1)
+    {
+      const int j16 = iter16 * 16;
+
+      w0[0] = largeblock[j16 + 0];
+      w0[1] = largeblock[j16 + 1];
+      w0[2] = largeblock[j16 + 2];
+      w0[3] = largeblock[j16 + 3];
+      w1[0] = largeblock[j16 + 4];
+      w1[1] = largeblock[j16 + 5];
+      w1[2] = largeblock[j16 + 6];
+      w1[3] = largeblock[j16 + 7];
+    }
+
+    // second iteration set
+    #pragma unroll
+    for (u32 i = 0, p = pw_len * 2; i < 16; i++, p += iter_len)
+    {
+      const u8 byte0 = unpack_v8a_from_v32_S (loop_pos_pos);
+      const u8 byte1 = unpack_v8b_from_v32_S (loop_pos_pos);
+
+      PUTCHAR_BE (largeblock, p + 0, byte0);
+      PUTCHAR_BE (largeblock, p + 1, byte1);
+
+      loop_pos_pos++;
+    }
+
+    int j16 = 0;
+
+    if (pw_len & 1)
+    {
+      w2[0] = largeblock[0];
+      w2[1] = largeblock[1];
+      w2[2] = largeblock[2];
+      w2[3] = largeblock[3];
+      w3[0] = largeblock[4];
+      w3[1] = largeblock[5];
+      w3[2] = largeblock[6];
+      w3[3] = largeblock[7];
+
+      sha256_transform (w0, w1, w2, w3, h);
+
+      j16 = 8;
+    }
+
+    // remaining full 64 byte buffers from the second set
+    for (int j = 0; j < iter16; j++, j16 += 16)
+    {
       w0[0] = largeblock[j16 +  0];
       w0[1] = largeblock[j16 +  1];
       w0[2] = largeblock[j16 +  2];
