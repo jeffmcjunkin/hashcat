@@ -48,12 +48,12 @@ CONSTANT_VK u32a c_ascii_to_ebcdic_pc[256] =
 #define BOX1(i,S) make_u32x ((S)[(i).s0], (S)[(i).s1], (S)[(i).s2], (S)[(i).s3], (S)[(i).s4], (S)[(i).s5], (S)[(i).s6], (S)[(i).s7], (S)[(i).s8], (S)[(i).s9], (S)[(i).sa], (S)[(i).sb], (S)[(i).sc], (S)[(i).sd], (S)[(i).se], (S)[(i).sf])
 #endif
 
-DECLSPEC u32x transform_racf_word (const u32x w)
+DECLSPEC u32x transform_racf_word (const u32x w, SHM_TYPE u32 *s_ascii_to_ebcdic_pc)
 {
-  const u32x b0 = BOX1 (((w >>  0) & 0xff), c_ascii_to_ebcdic_pc);
-  const u32x b1 = BOX1 (((w >>  8) & 0xff), c_ascii_to_ebcdic_pc);
-  const u32x b2 = BOX1 (((w >> 16) & 0xff), c_ascii_to_ebcdic_pc);
-  const u32x b3 = BOX1 (((w >> 24) & 0xff), c_ascii_to_ebcdic_pc);
+  const u32x b0 = BOX1 (((w >>  0) & 0xff), s_ascii_to_ebcdic_pc);
+  const u32x b1 = BOX1 (((w >>  8) & 0xff), s_ascii_to_ebcdic_pc);
+  const u32x b2 = BOX1 (((w >> 16) & 0xff), s_ascii_to_ebcdic_pc);
+  const u32x b3 = BOX1 (((w >> 24) & 0xff), s_ascii_to_ebcdic_pc);
 
   return hc_byte_perm (b0, b1, 0x1140)
        | hc_byte_perm (b2, b3, 0x4011);
@@ -159,7 +159,7 @@ DECLSPEC void racf_des_keysetup_vect (u32x c, const u32 c_pc1, const u32 d_pc1, 
   }
 }
 
-DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64], PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTOR ())
+DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64], PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTOR (), SHM_TYPE u32 *s_ascii_to_ebcdic_pc)
 {
   /**
    * modifiers are taken from args
@@ -199,7 +199,7 @@ DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
      * RACF
      */
 
-    const u32x c = transform_racf_word (w0);
+    const u32x c = transform_racf_word (w0, s_ascii_to_ebcdic_pc);
 
     u32x Kc[16];
     u32x Kd[16];
@@ -216,7 +216,7 @@ DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
   }
 }
 
-DECLSPEC void m08500s (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64], PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTOR ())
+DECLSPEC void m08500s (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64], PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTOR (), SHM_TYPE u32 *s_ascii_to_ebcdic_pc)
 {
   /**
    * modifiers are taken from args
@@ -268,7 +268,7 @@ DECLSPEC void m08500s (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
      * RACF
      */
 
-    const u32x c = transform_racf_word (w0);
+    const u32x c = transform_racf_word (w0, s_ascii_to_ebcdic_pc);
 
     u32x Kc[16];
     u32x Kd[16];
@@ -303,6 +303,7 @@ KERNEL_FQ KERNEL_FA void m08500_mxx (KERN_ATTR_VECTOR ())
 
   LOCAL_VK u32 s_SPtrans[8][64];
   LOCAL_VK u32 s_skb[8][64];
+  LOCAL_VK u32 s_ascii_to_ebcdic_pc[256];
 
   for (u32 i = lid; i < 64; i += lsz)
   {
@@ -325,12 +326,18 @@ KERNEL_FQ KERNEL_FA void m08500_mxx (KERN_ATTR_VECTOR ())
     s_skb[7][i] = c_skb[7][i];
   }
 
+  for (u32 i = lid; i < 256; i += lsz)
+  {
+    s_ascii_to_ebcdic_pc[i] = c_ascii_to_ebcdic_pc[i];
+  }
+
   SYNC_THREADS ();
 
   #else
 
   CONSTANT_AS u32a (*s_SPtrans)[64] = c_SPtrans;
   CONSTANT_AS u32a (*s_skb)[64]     = c_skb;
+  CONSTANT_AS u32a *s_ascii_to_ebcdic_pc = c_ascii_to_ebcdic_pc;
 
   #endif
 
@@ -365,7 +372,7 @@ KERNEL_FQ KERNEL_FA void m08500_mxx (KERN_ATTR_VECTOR ())
    * main
    */
 
-  m08500m (s_SPtrans, s_skb, w, pw_len, pws, rules_buf, combs_buf, words_buf_r, tmps, hooks, bitmaps_buf_s1_a, bitmaps_buf_s1_b, bitmaps_buf_s1_c, bitmaps_buf_s1_d, bitmaps_buf_s2_a, bitmaps_buf_s2_b, bitmaps_buf_s2_c, bitmaps_buf_s2_d, plains_buf, digests_buf, hashes_shown, salt_bufs, esalt_bufs, d_return_buf, d_extra0_buf, d_extra1_buf, d_extra2_buf, d_extra3_buf, kernel_param, gid, lid, lsz);
+  m08500m (s_SPtrans, s_skb, w, pw_len, pws, rules_buf, combs_buf, words_buf_r, tmps, hooks, bitmaps_buf_s1_a, bitmaps_buf_s1_b, bitmaps_buf_s1_c, bitmaps_buf_s1_d, bitmaps_buf_s2_a, bitmaps_buf_s2_b, bitmaps_buf_s2_c, bitmaps_buf_s2_d, plains_buf, digests_buf, hashes_shown, salt_bufs, esalt_bufs, d_return_buf, d_extra0_buf, d_extra1_buf, d_extra2_buf, d_extra3_buf, kernel_param, gid, lid, lsz, s_ascii_to_ebcdic_pc);
 }
 
 KERNEL_FQ KERNEL_FA void m08500_sxx (KERN_ATTR_VECTOR ())
@@ -386,6 +393,7 @@ KERNEL_FQ KERNEL_FA void m08500_sxx (KERN_ATTR_VECTOR ())
 
   LOCAL_VK u32 s_SPtrans[8][64];
   LOCAL_VK u32 s_skb[8][64];
+  LOCAL_VK u32 s_ascii_to_ebcdic_pc[256];
 
   for (u32 i = lid; i < 64; i += lsz)
   {
@@ -408,12 +416,18 @@ KERNEL_FQ KERNEL_FA void m08500_sxx (KERN_ATTR_VECTOR ())
     s_skb[7][i] = c_skb[7][i];
   }
 
+  for (u32 i = lid; i < 256; i += lsz)
+  {
+    s_ascii_to_ebcdic_pc[i] = c_ascii_to_ebcdic_pc[i];
+  }
+
   SYNC_THREADS ();
 
   #else
 
   CONSTANT_AS u32a (*s_SPtrans)[64] = c_SPtrans;
   CONSTANT_AS u32a (*s_skb)[64]     = c_skb;
+  CONSTANT_AS u32a *s_ascii_to_ebcdic_pc = c_ascii_to_ebcdic_pc;
 
   #endif
 
@@ -448,5 +462,5 @@ KERNEL_FQ KERNEL_FA void m08500_sxx (KERN_ATTR_VECTOR ())
    * main
    */
 
-  m08500s (s_SPtrans, s_skb, w, pw_len, pws, rules_buf, combs_buf, words_buf_r, tmps, hooks, bitmaps_buf_s1_a, bitmaps_buf_s1_b, bitmaps_buf_s1_c, bitmaps_buf_s1_d, bitmaps_buf_s2_a, bitmaps_buf_s2_b, bitmaps_buf_s2_c, bitmaps_buf_s2_d, plains_buf, digests_buf, hashes_shown, salt_bufs, esalt_bufs, d_return_buf, d_extra0_buf, d_extra1_buf, d_extra2_buf, d_extra3_buf, kernel_param, gid, lid, lsz);
+  m08500s (s_SPtrans, s_skb, w, pw_len, pws, rules_buf, combs_buf, words_buf_r, tmps, hooks, bitmaps_buf_s1_a, bitmaps_buf_s1_b, bitmaps_buf_s1_c, bitmaps_buf_s1_d, bitmaps_buf_s2_a, bitmaps_buf_s2_b, bitmaps_buf_s2_c, bitmaps_buf_s2_d, plains_buf, digests_buf, hashes_shown, salt_bufs, esalt_bufs, d_return_buf, d_extra0_buf, d_extra1_buf, d_extra2_buf, d_extra3_buf, kernel_param, gid, lid, lsz, s_ascii_to_ebcdic_pc);
 }
