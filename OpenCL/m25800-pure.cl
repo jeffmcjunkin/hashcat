@@ -10,6 +10,7 @@
 #include M2S(INCLUDE_PATH/inc_common.cl)
 #define BCRYPT_KEY32_PREBIASED_LID
 #define BCRYPT_UNROLL_SBOX_EXPANSION
+#define BCRYPT_WALK_SBOX_STORES
 #include M2S(INCLUDE_PATH/inc_cipher_blowfish.cl)
 #include M2S(INCLUDE_PATH/inc_hash_sha1.cl)
 #endif

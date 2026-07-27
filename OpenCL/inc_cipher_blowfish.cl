@@ -645,6 +645,75 @@ DECLSPEC void blowfish_encrypt (PRIVATE_AS u32 *P, LOCAL_AS u32 *S0, LOCAL_AS u3
   }
 
   #ifdef BCRYPT_UNROLL_SBOX_EXPANSION
+  #if defined BCRYPT_WALK_SBOX_STORES && defined BCRYPT_AVOID_BANK_CONFLICTS && defined BCRYPT_KEY32_PREBIASED_LID
+  LOCAL_AS u32 *S_store = S0;
+
+  for (u32 i = 0; i < 64; i++)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 0] = L0;
+    S_store[FIXED_LOCAL_SIZE * 1] = R0;
+
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 2] = L0;
+    S_store[FIXED_LOCAL_SIZE * 3] = R0;
+
+    S_store += FIXED_LOCAL_SIZE * 4;
+  }
+
+  S_store = S1;
+
+  for (u32 i = 0; i < 64; i++)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 0] = L0;
+    S_store[FIXED_LOCAL_SIZE * 1] = R0;
+
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 2] = L0;
+    S_store[FIXED_LOCAL_SIZE * 3] = R0;
+
+    S_store += FIXED_LOCAL_SIZE * 4;
+  }
+
+  S_store = S2;
+
+  for (u32 i = 0; i < 64; i++)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 0] = L0;
+    S_store[FIXED_LOCAL_SIZE * 1] = R0;
+
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 2] = L0;
+    S_store[FIXED_LOCAL_SIZE * 3] = R0;
+
+    S_store += FIXED_LOCAL_SIZE * 4;
+  }
+
+  S_store = S3;
+
+  for (u32 i = 0; i < 64; i++)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 0] = L0;
+    S_store[FIXED_LOCAL_SIZE * 1] = R0;
+
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 2] = L0;
+    S_store[FIXED_LOCAL_SIZE * 3] = R0;
+
+    S_store += FIXED_LOCAL_SIZE * 4;
+  }
+  #else
   for (u32 i = 0; i < 256; i += 4)
   {
     BF_ENCRYPT (L0, R0);
@@ -696,6 +765,7 @@ DECLSPEC void blowfish_encrypt (PRIVATE_AS u32 *P, LOCAL_AS u32 *S0, LOCAL_AS u3
     SET_KEY32 (S3, i + 2, L0);
     SET_KEY32 (S3, i + 3, R0);
   }
+  #endif
   #else
   for (u32 i = 0; i < 256; i += 2)
   {
