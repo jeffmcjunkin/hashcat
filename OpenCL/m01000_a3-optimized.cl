@@ -172,7 +172,6 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
    * base
    */
 
-  const u32 F_w0c00 =     0 + MD4C00;
   const u32 F_w1c00 = w[ 1] + MD4C00;
   const u32 F_w2c00 = w[ 2] + MD4C00;
   const u32 F_w3c00 = w[ 3] + MD4C00;
@@ -189,7 +188,7 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
   const u32 F_wec00 = w[14] + MD4C00;
   const u32 F_wfc00 = w[15] + MD4C00;
 
-  const u32 G_w0c01 =     0 + MD4C01;
+  const u32 G_w0c01 =     1 + MD4C01;
   const u32 G_w4c01 = w[ 4] + MD4C01;
   const u32 G_w8c01 = w[ 8] + MD4C01;
   const u32 G_wcc01 = w[12] + MD4C01;
@@ -206,7 +205,7 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
   const u32 G_wbc01 = w[11] + MD4C01;
   const u32 G_wfc01 = w[15] + MD4C01;
 
-  const u32 H_w0c02 =     0 + MD4C02;
+  const u32 H_w0c02 =     1 + MD4C02;
   const u32 H_w8c02 = w[ 8] + MD4C02;
   const u32 H_w4c02 = w[ 4] + MD4C02;
   const u32 H_wcc02 = w[12] + MD4C02;
@@ -259,7 +258,7 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
   MD4_STEP_REV (MD4_H_S, b_rev, c_rev, d_rev, a_rev, w[12], MD4C02, MD4S23);
   MD4_STEP_REV (MD4_H_S, c_rev, d_rev, a_rev, b_rev, w[ 4], MD4C02, MD4S22);
   MD4_STEP_REV (MD4_H_S, d_rev, a_rev, b_rev, c_rev, w[ 8], MD4C02, MD4S21);
-  MD4_STEP_REV (MD4_H_S, a_rev, b_rev, c_rev, d_rev,     0, MD4C02, MD4S20);
+  MD4_STEP_REV (MD4_H_S, a_rev, b_rev, c_rev, d_rev,     0, MD4C02 + 1, MD4S20);
 
   const u32 sav_c = c_rev;
   const u32 sav_d = d_rev;
@@ -276,13 +275,13 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
 
   for (u32 il_pos = 0; il_pos < IL_CNT; il_pos += VECT_SIZE)
   {
-    const u32x w0 = w0l + words_buf_r[il_pos / VECT_SIZE];
+    const u32x w0m1 = hc_add3 (make_u32x (w0l), words_buf_r[il_pos / VECT_SIZE], make_u32x (0xffffffff));
 
     u32x pre_a = a_rev;
     u32x pre_b = b_rev;
     u32x pre_c = c_rev;
 
-    pre_a = pre_a - w0;
+    pre_a = pre_a - w0m1;
     pre_b = pre_b - MD4_G (sav_c, sav_d, pre_a);
     pre_c = pre_c - MD4_G (sav_d, pre_a, pre_b);
 
@@ -290,12 +289,11 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
 
     pre_d = pre_d - MD4_G (pre_a, pre_b, pre_c);
 
-    u32x a = MD4M_A;
+    u32x a = hc_rotl32 (w0m1, MD4S00);
     u32x b = MD4M_B;
     u32x c = MD4M_C;
     u32x d = MD4M_D;
 
-    MD4_STEP (MD4_Fo, a, b, c, d, w0, F_w0c00, MD4S00);
     MD4_STEP0(MD4_Fo, d, a, b, c,     F_w1c00, MD4S01);
     MD4_STEP0(MD4_Fo, c, d, a, b,     F_w2c00, MD4S02);
     MD4_STEP0(MD4_Fo, b, c, d, a,     F_w3c00, MD4S03);
@@ -312,7 +310,7 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
     MD4_STEP0(MD4_Fo, c, d, a, b,     F_wec00, MD4S02);
     MD4_STEP0(MD4_Fo, b, c, d, a,     F_wfc00, MD4S03);
 
-    MD4_STEP (MD4_Go, a, b, c, d, w0, G_w0c01, MD4S10);
+    MD4_STEP (MD4_Go, a, b, c, d, w0m1, G_w0c01, MD4S10);
     MD4_STEP0(MD4_Go, d, a, b, c,     G_w4c01, MD4S11);
     MD4_STEP0(MD4_Go, c, d, a, b,     G_w8c01, MD4S12);
     MD4_STEP0(MD4_Go, b, c, d, a,     G_wcc01, MD4S13);
@@ -329,7 +327,7 @@ DECLSPEC void m01000s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
     MD4_STEP0(MD4_Go, c, d, a, b,     G_wbc01, MD4S12);
     MD4_STEP0(MD4_Go, b, c, d, a,     G_wfc01, MD4S13);
 
-    MD4_STEP (MD4_H , a, b, c, d, w0, H_w0c02, MD4S20);
+    MD4_STEP (MD4_H , a, b, c, d, w0m1, H_w0c02, MD4S20);
     MD4_STEP0(MD4_H , d, a, b, c,     H_w8c02, MD4S21);
     MD4_STEP0(MD4_H , c, d, a, b,     H_w4c02, MD4S22);
     MD4_STEP0(MD4_H , b, c, d, a,     H_wcc02, MD4S23);
