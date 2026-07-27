@@ -114,13 +114,13 @@ DECLSPEC void hmac_md5_run (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u
 
 DECLSPEC void rc4_init_128_virtual4 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u64 lid)
 {
-  u32 v = 0x03020100;
+  u32 v = 0x07060504;
   u32 a = 0x04040404;
 
   #ifdef _unroll
   #pragma unroll
   #endif
-  for (u8 i = 0; i < 64; i++)
+  for (u8 i = 1; i < 64; i++)
   {
     SET_KEY32 (S, i, v, lid); v += a;
   }
@@ -162,14 +162,31 @@ DECLSPEC void rc4_init_128_virtual4 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key,
                : (j3 == 0)  ? j0
                : j3;
 
-  SET_KEY8 (S,  0,  j0, lid);
   SET_KEY8 (S, j0,   0, lid);
-  SET_KEY8 (S,  1, sj1, lid);
   SET_KEY8 (S, j1,  s1, lid);
-  SET_KEY8 (S,  2, sj2, lid);
   SET_KEY8 (S, j2,  s2, lid);
-  SET_KEY8 (S,  3, sj3, lid);
   SET_KEY8 (S, j3,  s3, lid);
+
+  // The ordered j writes above establish every update outside positions 0..3.
+  // Commit the final low positions together, replacing four byte stores and
+  // making their identity initialization unnecessary.
+
+  const u8 s0 = (j3 == 0) ? s3
+              : (j2 == 0) ? s2
+              : (j1 == 0) ? s1
+              : (j0 == 0) ? 0
+              : j0;
+  const u8 s1_final = (j3 == 1) ? s3
+                    : (j2 == 1) ? s2
+                    : sj1;
+  const u8 s2_final = (j3 == 2) ? s3 : sj2;
+
+  const u32 sbox03 = ((u32) s0       <<  0)
+                   | ((u32) s1_final <<  8)
+                   | ((u32) s2_final << 16)
+                   | ((u32) sj3      << 24);
+
+  SET_KEY32 (S, 0, sbox03, lid);
 
   u8 j = j3;
 
