@@ -163,7 +163,12 @@ DECLSPEC void m31100s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
     digests_buf[DIGESTS_OFFSET_HOST].digest_buf[DGST_R3]
   };
 
-  const u32 d_rev = hc_rotr32_S (search[0], 9);
+  // The final h is rotl19 (P0 (TT2 from round 60)).  P0^4 is the identity,
+  // so P0^3 reverses P0 and lets us reject before the round-60 TT1/state work.
+  const u32 h_rev0  = hc_rotr32_S (search[1], 19);
+  const u32 h_rev1  = SM3_P0_S (h_rev0);
+  const u32 h_rev2  = SM3_P0_S (h_rev1);
+  const u32 tt2_rev = SM3_P0_S (h_rev2);
 
   /**
    * loop
@@ -281,9 +286,22 @@ DECLSPEC void m31100s (PRIVATE_AS u32 *w, const u32 pw_len, KERN_ATTR_FUNC_VECTO
     wd_t = SM3_EXPAND(wd_t, w4_t, wa_t, w0_t, w7_t); SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T57, w9_t, w9_t ^ wd_t);
     we_t = SM3_EXPAND(we_t, w5_t, wb_t, w1_t, w8_t); SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T58, wa_t, wa_t ^ we_t);
     wf_t = SM3_EXPAND(wf_t, w6_t, wc_t, w2_t, w9_t); SM3_ROUND2(b, c, d, a, f, g, h, e, SM3_T59, wb_t, wb_t ^ wf_t);
-    w0_t = SM3_EXPAND(w0_t, w7_t, wd_t, w3_t, wa_t); SM3_ROUND2(a, b, c, d, e, f, g, h, SM3_T60, wc_t, wc_t ^ w0_t);
+    w0_t = SM3_EXPAND(w0_t, w7_t, wd_t, w3_t, wa_t);
 
-    if (MATCHES_NONE_VS (d, d_rev)) continue;
+    {
+      const u32x A_ROTL12 = hc_rotl32 (a, 12);
+      const u32x SS1 = hc_rotl32 (A_ROTL12 + e + make_u32x (SM3_T60), 7);
+      const u32x TT2 = SM3_GG1 (e, f, g) + h + SS1 + wc_t;
+
+      if (MATCHES_NONE_VS (TT2, tt2_rev)) continue;
+
+      const u32x TT1 = SM3_FF1 (a, b, c) + d + (SS1 ^ A_ROTL12) + (wc_t ^ w0_t);
+
+      b = hc_rotl32 (b, 9);
+      d = TT1;
+      f = hc_rotl32 (f, 19);
+      h = SM3_P0 (TT2);
+    }
 
     w1_t = SM3_EXPAND(w1_t, w8_t, we_t, w4_t, wb_t); SM3_ROUND2(d, a, b, c, h, e, f, g, SM3_T61, wd_t, wd_t ^ w1_t);
     w2_t = SM3_EXPAND(w2_t, w9_t, wf_t, w5_t, wc_t); SM3_ROUND2(c, d, a, b, g, h, e, f, SM3_T62, we_t, we_t ^ w2_t);
