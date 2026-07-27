@@ -114,7 +114,7 @@ DECLSPEC void hmac_md5_run (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u
   md5_transform (w0, w1, w2, w3, digest);
 }
 
-DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS const u32 *edata2, const u32 edata2_len, PRIVATE_AS const u32 *K2, PRIVATE_AS const u32 *checksum, const u64 lid)
+DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS const u32 *edata2, const u32 edata2_len, PRIVATE_AS const u32 *K2, PRIVATE_AS const u32 *checksum, const u32 lid)
 {
   rc4_init_128 (S, data, lid);
 
@@ -461,7 +461,7 @@ KERNEL_FQ KERNEL_FA void m13100_m04 (KERN_ATTR_RULES_ESALT (krb5tgs_t))
    * modifier
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
 
   if (gid >= GID_CNT) return;
@@ -557,7 +557,7 @@ KERNEL_FQ KERNEL_FA void m13100_s04 (KERN_ATTR_RULES_ESALT (krb5tgs_t))
    * modifier
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
 
   if (gid >= GID_CNT) return;
