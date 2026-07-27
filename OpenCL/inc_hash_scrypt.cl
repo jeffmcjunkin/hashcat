@@ -11,10 +11,13 @@
 
 #if defined IS_CUDA
 #define SCRYPT_RESTRICT __restrict__
+#define SCRYPT_MATERIALIZE_PTR(p) asm volatile ("" : "+l" (p))
 #elif defined IS_OPENCL
 #define SCRYPT_RESTRICT restrict
+#define SCRYPT_MATERIALIZE_PTR(p)
 #else
 #define SCRYPT_RESTRICT
+#define SCRYPT_MATERIALIZE_PTR(p)
 #endif
 
 DECLSPEC hc_uint4_t xor_uint4 (const hc_uint4_t a, const hc_uint4_t b)
@@ -178,6 +181,8 @@ DECLSPEC void scrypt_smix_init (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, GLOBAL_AS v
 
   GLOBAL_AS hc_uint4_t *Vx = V + (xd4 * lsz * ySIZE * zSIZE) + (lid * ySIZE * zSIZE);
 
+  SCRYPT_MATERIALIZE_PTR (Vx);
+
   for (u32 i = 0; i < STATE_CNT4; i++) X[i] = P[i];
 
   for (u32 y = 0; y < ySIZE; y++)
@@ -221,6 +226,8 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 * SCRYPT_RESTRI
   }
 
   GLOBAL_AS const hc_uint4_t *Vx = V + (xd4 * lsz * ySIZE * zSIZE) + (lid * ySIZE * zSIZE);
+
+  SCRYPT_MATERIALIZE_PTR (Vx);
 
   for (u32 i = 0; i < STATE_CNT4; i++) X[i] = P[i];
 
@@ -565,3 +572,4 @@ DECLSPEC void scrypt_pbkdf2_ggg (GLOBAL_AS const u32 *pw_buf, const int pw_len, 
 }
 
 #undef SCRYPT_RESTRICT
+#undef SCRYPT_MATERIALIZE_PTR
