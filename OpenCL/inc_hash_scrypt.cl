@@ -262,17 +262,18 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 * SCRYPT_RESTRI
     #elif SCRYPT_TMTO == 2
     if (km & 2)
     {
-      salsa_r (T);
-
-      #if SCRYPT_R > 1
-      scrypt_shuffle (T);
+      #if defined IS_CUDA
+      #pragma unroll 1
       #endif
 
-      salsa_r (T);
+      for (u32 replay = 0; replay < 2; replay++)
+      {
+        salsa_r (T);
 
-      #if SCRYPT_R > 1
-      scrypt_shuffle (T);
-      #endif
+        #if SCRYPT_R > 1
+        scrypt_shuffle (T);
+        #endif
+      }
     }
 
     if (km & 1)
