@@ -429,6 +429,8 @@ DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const
 
   xor4 |= tmp << 0;
 
+  if (((in[2] ^ xor4) & 0xff) != 0x63) return -1;
+
   a += 1;
   b += GET_KEY8 (S, a, lid);
 
