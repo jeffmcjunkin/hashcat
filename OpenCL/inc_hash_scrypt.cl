@@ -12,12 +12,15 @@
 #if defined IS_CUDA
 #define SCRYPT_RESTRICT __restrict__
 #define SCRYPT_MATERIALIZE_PTR(p) asm volatile ("" : "+l" (p))
+#define SCRYPT_LOAD_LOOKUP(p) __ldg (p)
 #elif defined IS_OPENCL
 #define SCRYPT_RESTRICT restrict
 #define SCRYPT_MATERIALIZE_PTR(p)
+#define SCRYPT_LOAD_LOOKUP(p) (*(p))
 #else
 #define SCRYPT_RESTRICT
 #define SCRYPT_MATERIALIZE_PTR(p)
+#define SCRYPT_LOAD_LOOKUP(p) (*(p))
 #endif
 
 DECLSPEC hc_uint4_t xor_uint4 (const hc_uint4_t a, const hc_uint4_t b)
@@ -245,7 +248,7 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 * SCRYPT_RESTRI
 
     GLOBAL_AS const hc_uint4_t *Vxx = Vx + (y * zSIZE);
 
-    for (u32 z = 0; z < zSIZE; z++) T4[z] = *Vxx++;
+    for (u32 z = 0; z < zSIZE; z++) T4[z] = SCRYPT_LOAD_LOOKUP (Vxx++);
 
     #if SCRYPT_TMTO == 1
     if (km)
@@ -573,3 +576,4 @@ DECLSPEC void scrypt_pbkdf2_ggg (GLOBAL_AS const u32 *pw_buf, const int pw_len, 
 
 #undef SCRYPT_RESTRICT
 #undef SCRYPT_MATERIALIZE_PTR
+#undef SCRYPT_LOAD_LOOKUP
