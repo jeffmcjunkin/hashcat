@@ -84,7 +84,42 @@ DECLSPEC void racf_des_pc1_S (u32 c, u32 d, PRIVATE_AS u32 *c_pc1, PRIVATE_AS u3
   *c_pc1 = c & 0x0fffffff;
 }
 
-DECLSPEC void racf_des_keysetup_vect (u32x c, const u32 c_pc1, const u32 d_pc1, PRIVATE_AS u32x *Kc, PRIVATE_AS u32x *Kd, SHM_TYPE u32 (*s_skb)[64])
+DECLSPEC u32 racf_des_pc2_invariant_S (u32 c, SHM_TYPE u32 (*s_skb)[64])
+{
+  c = ((c >> 4) | (c << 24)) & 0x0fffffff;
+
+  const u32 c06_03 = (c >>  6) & 0x00383003;
+  const u32 c13_03 = (c >> 13) & 0x0000060f;
+  const u32 c20_03 = (c >> 20) & 0x00000001;
+
+  u32 s = DES_BOX_S (((c20_03 >>  0) & 0xff)
+                    |((c13_03 >>  8) & 0xff)
+                    |((c06_03 >> 16) & 0xff), 3, s_skb);
+
+  c = ((c >> 8) | (c << 20)) & 0x0fffffff;
+
+  const u32 c06_07 = (c >>  6) & 0x00383003;
+  const u32 c13_07 = (c >> 13) & 0x0000060f;
+
+  s |= DES_BOX_S (((c13_07 >> 0) & 0xff)
+                 |((c06_07 >> 8) & 0xff), 2, s_skb);
+
+  c = ((c >> 7) | (c << 21)) & 0x0fffffff;
+
+  const u32 c06_11 = (c >> 6) & 0x00383003;
+  const u32 c07_11 = (c >> 7) & 0x0000003c;
+
+  s |= DES_BOX_S (((c06_11 >> 0) & 0xff)
+                 |((c07_11 >> 0) & 0xff), 1, s_skb);
+
+  c = ((c >> 6) | (c << 22)) & 0x0fffffff;
+
+  s |= DES_BOX_S (((c >> 0) & 0x3f), 0, s_skb);
+
+  return s;
+}
+
+DECLSPEC void racf_des_keysetup_vect (u32x c, const u32 c_pc1, const u32 d_pc1, const u32 c_pc2, PRIVATE_AS u32x *Kc, PRIVATE_AS u32x *Kd, SHM_TYPE u32 (*s_skb)[64])
 {
   u32x d = 0;
 
@@ -130,14 +165,28 @@ DECLSPEC void racf_des_keysetup_vect (u32x c, const u32 c_pc1, const u32 d_pc1, 
     const u32x c13 = (c >> 13) & 0x0000060f;
     const u32x c20 = (c >> 20) & 0x00000001;
 
-    u32x s = DES_BOX (((c00 >>  0) & 0xff), 0, s_skb)
-           | DES_BOX (((c06 >>  0) & 0xff)
-                     |((c07 >>  0) & 0xff), 1, s_skb)
-           | DES_BOX (((c13 >>  0) & 0xff)
-                     |((c06 >>  8) & 0xff), 2, s_skb)
-           | DES_BOX (((c20 >>  0) & 0xff)
-                     |((c13 >>  8) & 0xff)
-                     |((c06 >> 16) & 0xff), 3, s_skb);
+    u32x s0;
+    u32x s1;
+    u32x s2;
+    u32x s3;
+
+    if (i == 13) s0 = c_pc2 & 0x20090830;
+    else         s0 = DES_BOX (((c00 >> 0) & 0xff), 0, s_skb);
+
+    if (i == 10) s1 = c_pc2 & 0x12202404;
+    else         s1 = DES_BOX (((c06 >> 0) & 0xff)
+                              |((c07 >> 0) & 0xff), 1, s_skb);
+
+    if (i ==  6) s2 = c_pc2 & 0x09040203;
+    else         s2 = DES_BOX (((c13 >> 0) & 0xff)
+                              |((c06 >> 8) & 0xff), 2, s_skb);
+
+    if (i ==  2) s3 = c_pc2 & 0x04121108;
+    else         s3 = DES_BOX (((c20 >>  0) & 0xff)
+                              |((c13 >>  8) & 0xff)
+                              |((c06 >> 16) & 0xff), 3, s_skb);
+
+    u32x s = s0 | s1 | s2 | s3;
 
     const u32x d00 = (d >>  0) & 0x00003c3f;
     const u32x d07 = (d >>  7) & 0x00003f03;
@@ -189,6 +238,8 @@ DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
 
   racf_des_pc1_S (0, d, &c_pc1, &d_pc1);
 
+  const u32 c_pc2 = racf_des_pc2_invariant_S (c_pc1, s_skb);
+
   for (u32 il_pos = 0; il_pos < IL_CNT; il_pos += VECT_SIZE)
   {
     const u32x w0r = words_buf_r[il_pos / VECT_SIZE];
@@ -204,7 +255,7 @@ DECLSPEC void m08500m (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
     u32x Kc[16];
     u32x Kd[16];
 
-    racf_des_keysetup_vect (c, c_pc1, d_pc1, Kc, Kd, s_skb);
+    racf_des_keysetup_vect (c, c_pc1, d_pc1, c_pc2, Kc, Kd, s_skb);
 
     u32x iv[2];
 
@@ -258,6 +309,8 @@ DECLSPEC void m08500s (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
 
   racf_des_pc1_S (0, d, &c_pc1, &d_pc1);
 
+  const u32 c_pc2 = racf_des_pc2_invariant_S (c_pc1, s_skb);
+
   for (u32 il_pos = 0; il_pos < IL_CNT; il_pos += VECT_SIZE)
   {
     const u32x w0r = words_buf_r[il_pos / VECT_SIZE];
@@ -273,7 +326,7 @@ DECLSPEC void m08500s (LOCAL_AS u32 (*s_SPtrans)[64], LOCAL_AS u32 (*s_skb)[64],
     u32x Kc[16];
     u32x Kd[16];
 
-    racf_des_keysetup_vect (c, c_pc1, d_pc1, Kc, Kd, s_skb);
+    racf_des_keysetup_vect (c, c_pc1, d_pc1, c_pc2, Kc, Kd, s_skb);
 
     u32x iv[2];
 
