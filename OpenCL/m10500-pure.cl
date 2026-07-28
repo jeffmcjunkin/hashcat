@@ -50,6 +50,8 @@ DECLSPEC void rc4_next_8_m10500 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *in, PRIV
   u8 a = 0;
   u8 b = 0;
 
+  u8 s_prefetch = GET_KEY8 (S, 1, lid);
+
   #ifdef _unroll
   #pragma unroll
   #endif
@@ -60,48 +62,72 @@ DECLSPEC void rc4_next_8_m10500 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *in, PRIV
     u32 tmp;
 
     u8 idx;
+    u8 next;
+    u8 sa;
+    u8 sb;
+    u8 s_next;
 
     a += 1;
-    b += GET_KEY8 (S, a, lid);
-
-    rc4_swap (S, a, b, lid);
-
-    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+    next = a + 1;
+    s_next = GET_KEY8 (S, next, lid);
+    sa = s_prefetch;
+    b += sa;
+    sb = GET_KEY8 (S, b, lid);
+    SET_KEY8 (S, a, sb, lid);
+    SET_KEY8 (S, b, sa, lid);
+    idx = sa + sb;
 
     tmp = GET_KEY8 (S, idx, lid);
+
+    s_prefetch = (b == next) ? sa : s_next;
 
     xor4 |= tmp <<  0;
 
     a += 1;
-    b += GET_KEY8 (S, a, lid);
-
-    rc4_swap (S, a, b, lid);
-
-    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+    next = a + 1;
+    s_next = GET_KEY8 (S, next, lid);
+    sa = s_prefetch;
+    b += sa;
+    sb = GET_KEY8 (S, b, lid);
+    SET_KEY8 (S, a, sb, lid);
+    SET_KEY8 (S, b, sa, lid);
+    idx = sa + sb;
 
     tmp = GET_KEY8 (S, idx, lid);
+
+    s_prefetch = (b == next) ? sa : s_next;
 
     xor4 |= tmp <<  8;
 
     a += 1;
-    b += GET_KEY8 (S, a, lid);
-
-    rc4_swap (S, a, b, lid);
-
-    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+    next = a + 1;
+    s_next = GET_KEY8 (S, next, lid);
+    sa = s_prefetch;
+    b += sa;
+    sb = GET_KEY8 (S, b, lid);
+    SET_KEY8 (S, a, sb, lid);
+    SET_KEY8 (S, b, sa, lid);
+    idx = sa + sb;
 
     tmp = GET_KEY8 (S, idx, lid);
+
+    s_prefetch = (b == next) ? sa : s_next;
 
     xor4 |= tmp << 16;
 
     a += 1;
-    b += GET_KEY8 (S, a, lid);
-
-    rc4_swap (S, a, b, lid);
-
-    idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+    next = a + 1;
+    s_next = GET_KEY8 (S, next, lid);
+    sa = s_prefetch;
+    b += sa;
+    sb = GET_KEY8 (S, b, lid);
+    SET_KEY8 (S, a, sb, lid);
+    SET_KEY8 (S, b, sa, lid);
+    idx = sa + sb;
 
     tmp = GET_KEY8 (S, idx, lid);
+
+    s_prefetch = (b == next) ? sa : s_next;
 
     xor4 |= tmp << 24;
 
