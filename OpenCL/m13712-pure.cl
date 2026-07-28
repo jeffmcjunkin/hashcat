@@ -262,6 +262,9 @@ KERNEL_FQ KERNEL_FA void m13712_init (KERN_ATTR_TMPS_ESALT (vc_tmp_t, vc_t))
   tmps[gid].opad[3] = ripemd160_hmac_ctx.opad.h[3];
   tmps[gid].opad[4] = ripemd160_hmac_ctx.opad.h[4];
 
+  tmps[gid].pim       = 0;
+  tmps[gid].pim_check = 0;
+
   ripemd160_hmac_update_global (&ripemd160_hmac_ctx, salt_bufs[SALT_POS_HOST].salt_buf, VC_SALT_LEN);
 
   for (u32 i = 0, j = 1; i < 32; i += 5, j += 1)
@@ -324,21 +327,24 @@ KERNEL_FQ KERNEL_FA void m13712_loop (KERN_ATTR_TMPS_ESALT (vc_tmp_t, vc_t))
   const int pim_stop  = esalt_bufs[DIGESTS_OFFSET_HOST].pim_stop;
 
   int pim    = 0;
-  int pim_at = 0;
+  u32 pim_at = LOOP_CNT;
 
-  for (u32 j = 0; j < LOOP_CNT; j++)
+  if (pim_stop)
   {
-    const int iter_abs = 1 + LOOP_POS + j;
-
-    if ((iter_abs % pim_multi) == pim_multi - 1)
+    for (u32 j = 0; j < LOOP_CNT; j++)
     {
-      const int pim_cur = (iter_abs / pim_multi) + 1;
+      const int iter_abs = 1 + LOOP_POS + j;
 
-      if ((pim_cur >= pim_start) && (pim_cur <= pim_stop))
+      if ((iter_abs % pim_multi) == pim_multi - 1)
       {
-        pim = pim_cur;
+        const int pim_cur = (iter_abs / pim_multi) + 1;
 
-        pim_at = j;
+        if ((pim_cur >= pim_start) && (pim_cur <= pim_stop))
+        {
+          pim = pim_cur;
+
+          pim_at = j;
+        }
       }
     }
   }
