@@ -292,28 +292,42 @@ DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 e
   RC4_STEP_DISCARD ();
   RC4_STEP_DISCARD ();
 
-  u32 out2 = 0;
+  RC4_STEP_BYTE (tmp);
 
-  RC4_STEP_BYTE (tmp); out2 |= (u32) tmp <<  0;
-  RC4_STEP_BYTE (tmp); out2 |= (u32) tmp <<  8;
-  RC4_STEP_BYTE (tmp); out2 |= (u32) tmp << 16;
-  RC4_STEP_BYTE (tmp); out2 |= (u32) tmp << 24;
-
-  out2 ^= edata2_2;
+  if ((((u32) tmp ^ edata2_2) & 0xff) != 0x79) return 0;
 
   RC4_STEP_BYTE (tmp);
 
-  const u32 out3_0 = (edata2_3 ^ (u32) tmp) & 0x000000ff;
+  const u32 len_tag = ((u32) tmp ^ (edata2_2 >> 8)) & 0xff;
+
+  if ((len_tag & 0x80) == 0)
+  {
+    RC4_STEP_BYTE (tmp);
+
+    return ((((u32) tmp ^ (edata2_2 >> 16)) & 0xff) == 0x30);
+  }
+
+  if (len_tag == 0x81)
+  {
+    RC4_STEP_DISCARD ();
+    RC4_STEP_BYTE (tmp);
+
+    return ((((u32) tmp ^ (edata2_2 >> 24)) & 0xff) == 0x30);
+  }
+
+  if (len_tag == 0x82)
+  {
+    RC4_STEP_DISCARD ();
+    RC4_STEP_DISCARD ();
+    RC4_STEP_BYTE (tmp);
+
+    return ((((u32) tmp ^ edata2_3) & 0xff) == 0x30);
+  }
 
   #undef RC4_STEP_BYTE
   #undef RC4_STEP_DISCARD
 
-  if (((out2 & 0x00ff80ff) != 0x00300079) &&
-      ((out2 & 0xFF00FFFF) != 0x30008179) &&
-      ((out2 & 0x0000FFFF) != 0x00008279 || out3_0 != 0x00000030))
-      return 0;
-
-  return 1;
+  return 0;
 }
 
 DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS const u32 *edata2, const u32 edata2_len, PRIVATE_AS const u32 *K2, PRIVATE_AS const u32 *checksum, const u32 lid)
