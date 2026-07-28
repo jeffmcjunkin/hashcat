@@ -322,6 +322,12 @@ DECLSPEC void rc4_init_128 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u3
                     : sj1;
   const u8 s2_final = (j3 == 2) ? s3 : sj2;
 
+  const u8 s4 = (j3 == 4) ? s3
+              : (j2 == 4) ? s2
+              : (j1 == 4) ? s1
+              : (j0 == 4) ? 0
+              : 4;
+
   const u32 sbox03 = ((u32) s0       <<  0)
                    | ((u32) s1_final <<  8)
                    | ((u32) s2_final << 16)
@@ -331,7 +337,7 @@ DECLSPEC void rc4_init_128 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u3
 
   u8 j   = j3;
   u8 idx = 4;
-  u8 s_i = GET_KEY8 (S, idx, lid);
+  u8 s_i = s4;
 
   v = key[1];
 
