@@ -35,7 +35,7 @@
 // The 48-digit tail is invariant across the a3 inner loop.  Decode it once per
 // gid, then reconstruct each candidate with eight limb multiplies instead of
 // replaying all 48 digits (480 limb multiplies) for every surviving prefix.
-DECLSPEC void m28501_decode_b58_tail (PRIVATE_AS u32 *tail, PRIVATE_AS const u32 *data)
+DECLSPEC bool m28501_decode_b58_tail (PRIVATE_AS u32 *tail, PRIVATE_AS const u32 *data)
 {
   for (u32 i = 0; i < 10; i++) tail[i] = 0;
 
@@ -45,6 +45,8 @@ DECLSPEC void m28501_decode_b58_tail (PRIVATE_AS u32 *tail, PRIVATE_AS const u32
     const u32 shift = (i % 4) * 8;
 
     int c = B58_DIGITS_MAP[(data[div] >> shift) & 0xff];
+
+    if (c < 0) return false;
 
     #pragma unroll
     for (u32 j = 0; j < 10; j++)
@@ -56,6 +58,8 @@ DECLSPEC void m28501_decode_b58_tail (PRIVATE_AS u32 *tail, PRIVATE_AS const u32
       tail[pos] = t;
     }
   }
+
+  return true;
 }
 
 DECLSPEC void m28501_join_b58_prefix (PRIVATE_AS u32 *out, const u32 prefix, PRIVATE_AS const u32 *tail)
@@ -167,13 +171,11 @@ KERNEL_FQ KERNEL_FA void m28501_mxx (KERN_ATTR_VECTOR ())
     w[i] = pws[gid].i[i];
   }
 
-  const bool status_base58 = is_valid_base58 (w, 4, 52);
-
-  if (status_base58 != true) return;
-
   u32 b58_tail[10];
 
-  m28501_decode_b58_tail (b58_tail, w);
+  const bool status_base58 = m28501_decode_b58_tail (b58_tail, w);
+
+  if (status_base58 != true) return;
 
   // 58^48 contains 48 factors of two, so the low 48 bits are independent of
   // the four candidate prefix digits.  The compressed-key marker is the low
@@ -346,13 +348,11 @@ KERNEL_FQ KERNEL_FA void m28501_sxx (KERN_ATTR_VECTOR ())
     w[i] = pws[gid].i[i];
   }
 
-  const bool status_base58 = is_valid_base58 (w, 4, 52);
-
-  if (status_base58 != true) return;
-
   u32 b58_tail[10];
 
-  m28501_decode_b58_tail (b58_tail, w);
+  const bool status_base58 = m28501_decode_b58_tail (b58_tail, w);
+
+  if (status_base58 != true) return;
 
   if ((b58_tail[8] & 0xff) != 1) return;
 
