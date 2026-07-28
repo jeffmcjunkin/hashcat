@@ -20,6 +20,14 @@
 #include M2S(INCLUDE_PATH/inc_ecc_secp256k1.cl)
 #endif
 
+// The common Base58/checksum path is latency-bound at 210 registers/thread.
+// Five 64-thread blocks need only a small register trim while exposing ten
+// warps per SM instead of the eight available with one 256-thread block.
+#if defined IS_CUDA || defined IS_HIP
+#undef  KERNEL_FA
+#define KERNEL_FA __launch_bounds__ (64, 5)
+#endif
+
 // or use set_precomputed_basepoint_g () instead:
 // (set SECP256K1_TMPS_TYPE to CONSTANT_AS above:)
 
