@@ -98,9 +98,10 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
 
   const u32 p3 = p2 + 3;
 
-  // this is large enough to hold all possible w[] arrays for 64 iterations
+  // Four records end on a word boundary.  Keep just that repeating pattern
+  // plus a wrapped prefix, so every 16-word SHA-1 load remains contiguous.
 
-  #define LARGEBLOCK_ELEMS ((40 + 8 + 3) * 16)
+  #define LARGEBLOCK_ELEMS ((40 + 8 + 3) + 15)
 
   u32 largeblock[LARGEBLOCK_ELEMS];
 
@@ -125,16 +126,18 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
     p += 3;
   }
 
-  // replicate the aligned four-record pattern to cover all 64 iterations
+  // Duplicate enough cyclic words for a contiguous load starting anywhere in
+  // the pattern.  p3 can be smaller than 15 for short passwords.
 
-  for (u32 i = 1; i < 16; i++)
+  u32 prefix_pos = 0;
+
+  for (u32 i = 0; i < 15; i++)
   {
-    const u32 dst = i * p3;
+    largeblock[p3 + i] = largeblock[prefix_pos];
 
-    for (u32 j = 0; j < p3; j++)
-    {
-      largeblock[dst + j] = largeblock[j];
-    }
+    prefix_pos++;
+
+    if (prefix_pos == p3) prefix_pos = 0;
   }
 
   const u32 init_pos = LOOP_POS / (ROUNDS / 16);
@@ -155,10 +158,10 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
 
     u32 k = p2;
 
+    u32 j16 = 0;
+
     for (u32 j = 0; j < p3; j++)
     {
-      const u32 j16 = j * 16;
-
       u32 w[16];
 
       w[ 0] = largeblock[j16 +  0] | tmp;
@@ -344,6 +347,10 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
       sha1_transform (w + 0, w + 4, w + 8, w + 12, dgst);
 
       k &= 63;
+
+      j16 += 16;
+
+      if (j16 >= p3) j16 -= p3;
     }
   }
 
