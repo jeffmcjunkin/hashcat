@@ -262,26 +262,102 @@ DECLSPEC void rc4_init_104 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u3
 
 DECLSPEC void rc4_init_128 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u32 lid)
 {
-  u32 v = 0x03020100;
+  u32 v = 0x07060504;
   u32 a = 0x04040404;
 
   #ifdef _unroll
   #pragma unroll
   #endif
-  for (u8 i = 0; i < 64; i++)
+  for (u8 i = 1; i < 64; i++)
   {
     SET_KEY32 (S, i, v, lid); v += a;
   }
 
-  u8 j = 0;
-  u8 s_i = GET_KEY8 (S, 0, lid);
+  v = key[0];
+
+  const u8 d0 = v8a_from_v32_S (v);
+  const u8 d1 = v8b_from_v32_S (v);
+  const u8 d2 = v8c_from_v32_S (v);
+  const u8 d3 = v8d_from_v32_S (v);
+
+  const u8 j0 = d0;
+
+  const u8 s1  = (j0 == 1) ? 0 : 1;
+  const u8 j1  = j0 + s1 + d1;
+  const u8 sj1 = (j1 == j0) ? 0 : ((j1 == 0) ? j0 : j1);
+
+  const u8 s2  = (j1 == 2) ? s1 : ((j0 == 2) ? 0 : 2);
+  const u8 j2  = j1 + s2 + d2;
+  const u8 sj2 = (j2 == j1) ? s1
+               : (j2 == 1)  ? sj1
+               : (j2 == j0) ? 0
+               : (j2 == 0)  ? j0
+               : j2;
+
+  const u8 s3  = (j2 == 3) ? s2
+               : (j1 == 3) ? s1
+               : (j0 == 3) ? 0
+               : 3;
+  const u8 j3  = j2 + s3 + d3;
+  const u8 sj3 = (j3 == j2) ? s2
+               : (j3 == 2)  ? sj2
+               : (j3 == j1) ? s1
+               : (j3 == 1)  ? sj1
+               : (j3 == j0) ? 0
+               : (j3 == 0)  ? j0
+               : j3;
+
+  SET_KEY8 (S, j0,  0, lid);
+  SET_KEY8 (S, j1, s1, lid);
+  SET_KEY8 (S, j2, s2, lid);
+  SET_KEY8 (S, j3, s3, lid);
+
+  const u8 s0 = (j3 == 0) ? s3
+              : (j2 == 0) ? s2
+              : (j1 == 0) ? s1
+              : (j0 == 0) ? 0
+              : j0;
+  const u8 s1_final = (j3 == 1) ? s3
+                    : (j2 == 1) ? s2
+                    : sj1;
+  const u8 s2_final = (j3 == 2) ? s3 : sj2;
+
+  const u32 sbox03 = ((u32) s0       <<  0)
+                   | ((u32) s1_final <<  8)
+                   | ((u32) s2_final << 16)
+                   | ((u32) sj3      << 24);
+
+  SET_KEY32 (S, 0, sbox03, lid);
+
+  u8 j   = j3;
+  u8 idx = 4;
+  u8 s_i = GET_KEY8 (S, idx, lid);
+
+  v = key[1];
+
+  RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+  RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+  RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+  RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
+
+  v = key[2];
+
+  RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+  RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+  RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+  RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
+
+  v = key[3];
+
+  RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+  RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+  RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+  RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
 
   #pragma unroll 8
-  for (u32 i = 0; i < 16; i++)
+  for (u32 i = 1; i < 16; i++)
   {
-    u8 idx = i * 16;
-
-    u32 v;
+    idx = i * 16;
 
     v = key[0];
 
