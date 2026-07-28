@@ -490,6 +490,8 @@ DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const
 {
   u8 a = i;
   u8 b = j;
+  u8 sa;
+  u8 sb;
 
   #ifdef _unroll
   #pragma unroll
@@ -497,9 +499,12 @@ DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const
   for (int k = 0; k < 8; k++)
   {
     a += 1;
-    b += GET_KEY8 (S, a, lid);
+    sa = GET_KEY8 (S, a, lid);
+    b += sa;
+    sb = GET_KEY8 (S, b, lid);
 
-    rc4_swap (S, a, b, lid);
+    SET_KEY8 (S, a, sb, lid);
+    SET_KEY8 (S, b, sa, lid);
   }
 
   u32 xor4 = 0;
@@ -509,11 +514,14 @@ DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const
   u8 idx;
 
   a += 1;
-  b += GET_KEY8 (S, a, lid);
+  sa = GET_KEY8 (S, a, lid);
+  b += sa;
+  sb = GET_KEY8 (S, b, lid);
 
-  rc4_swap (S, a, b, lid);
+  SET_KEY8 (S, a, sb, lid);
+  SET_KEY8 (S, b, sa, lid);
 
-  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+  idx = sa + sb;
 
   tmp = GET_KEY8 (S, idx, lid);
 
@@ -522,11 +530,14 @@ DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const
   if (((in[2] ^ xor4) & 0xff) != 0x63) return -1;
 
   a += 1;
-  b += GET_KEY8 (S, a, lid);
+  sa = GET_KEY8 (S, a, lid);
+  b += sa;
+  sb = GET_KEY8 (S, b, lid);
 
-  rc4_swap (S, a, b, lid);
+  SET_KEY8 (S, a, sb, lid);
+  SET_KEY8 (S, b, sa, lid);
 
-  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+  idx = sa + sb;
 
   tmp = GET_KEY8 (S, idx, lid);
 
@@ -537,22 +548,28 @@ DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const
   if ((prefix != 0x8163) && (prefix != 0x8263)) return -1;
 
   a += 1;
-  b += GET_KEY8 (S, a, lid);
+  sa = GET_KEY8 (S, a, lid);
+  b += sa;
+  sb = GET_KEY8 (S, b, lid);
 
-  rc4_swap (S, a, b, lid);
+  SET_KEY8 (S, a, sb, lid);
+  SET_KEY8 (S, b, sa, lid);
 
-  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+  idx = sa + sb;
 
   tmp = GET_KEY8 (S, idx, lid);
 
   xor4 |= tmp << 16;
 
   a += 1;
-  b += GET_KEY8 (S, a, lid);
+  sa = GET_KEY8 (S, a, lid);
+  b += sa;
+  sb = GET_KEY8 (S, b, lid);
 
-  rc4_swap (S, a, b, lid);
+  SET_KEY8 (S, a, sb, lid);
+  SET_KEY8 (S, b, sa, lid);
 
-  idx = GET_KEY8 (S, a, lid) + GET_KEY8 (S, b, lid);
+  idx = sa + sb;
 
   tmp = GET_KEY8 (S, idx, lid);
 
