@@ -21,11 +21,11 @@
 #endif
 
 // The common Base58/checksum path is latency-bound at 210 registers/thread.
-// Five 64-thread blocks need only a small register trim while exposing ten
-// warps per SM instead of the eight available with one 256-thread block.
+// Seven 64-thread blocks trade a moderate register trim for fourteen resident
+// warps per SM, versus twelve on the first retained occupancy-tuned version.
 #if defined IS_CUDA || defined IS_HIP
 #undef  KERNEL_FA
-#define KERNEL_FA __launch_bounds__ (64, 5)
+#define KERNEL_FA __launch_bounds__ (64, 7)
 #endif
 
 // or use set_precomputed_basepoint_g () instead:
