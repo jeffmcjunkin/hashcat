@@ -266,6 +266,32 @@ DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 e
   u8 a = 0;
   u8 b = 0;
   u8 tmp;
+  u8 s_prefetch = GET_KEY8 (S, 1, lid);
+
+  #define RC4_STEP_DISCARD_PREFETCH()             \
+  {                                                \
+    a += 1;                                        \
+    const u8 next = a + 1;                        \
+    const u8 Snext = GET_KEY8 (S, next, lid);     \
+    const u8 Sa = s_prefetch;                     \
+    b += Sa;                                       \
+    const u8 Sb = GET_KEY8 (S, b, lid);           \
+    SET_KEY8 (S, a, Sb, lid);                      \
+    SET_KEY8 (S, b, Sa, lid);                      \
+    s_prefetch = (b == next) ? Sa : Snext;        \
+  }
+
+  #define RC4_STEP_BYTE_CARRIED(out)              \
+  {                                                \
+    a += 1;                                        \
+    const u8 Sa = s_prefetch;                     \
+    b += Sa;                                       \
+    const u8 Sb = GET_KEY8 (S, b, lid);           \
+    SET_KEY8 (S, a, Sb, lid);                      \
+    SET_KEY8 (S, b, Sa, lid);                      \
+    const u8 idx = Sa + Sb;                        \
+    out = GET_KEY8 (S, idx, lid);                  \
+  }
 
   #define RC4_STEP_DISCARD()             \
   {                                      \
@@ -289,16 +315,16 @@ DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 e
     out = GET_KEY8 (S, idx, lid);        \
   }
 
-  RC4_STEP_DISCARD ();
-  RC4_STEP_DISCARD ();
-  RC4_STEP_DISCARD ();
-  RC4_STEP_DISCARD ();
-  RC4_STEP_DISCARD ();
-  RC4_STEP_DISCARD ();
-  RC4_STEP_DISCARD ();
-  RC4_STEP_DISCARD ();
+  RC4_STEP_DISCARD_PREFETCH ();
+  RC4_STEP_DISCARD_PREFETCH ();
+  RC4_STEP_DISCARD_PREFETCH ();
+  RC4_STEP_DISCARD_PREFETCH ();
+  RC4_STEP_DISCARD_PREFETCH ();
+  RC4_STEP_DISCARD_PREFETCH ();
+  RC4_STEP_DISCARD_PREFETCH ();
+  RC4_STEP_DISCARD_PREFETCH ();
 
-  RC4_STEP_BYTE (tmp);
+  RC4_STEP_BYTE_CARRIED (tmp);
 
   if ((((u32) tmp ^ edata2_2) & 0xff) != 0x79) return 0;
 
@@ -331,7 +357,9 @@ DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 e
   }
 
   #undef RC4_STEP_BYTE
+  #undef RC4_STEP_BYTE_CARRIED
   #undef RC4_STEP_DISCARD
+  #undef RC4_STEP_DISCARD_PREFETCH
 
   return 0;
 }
