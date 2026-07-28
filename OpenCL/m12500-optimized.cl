@@ -163,63 +163,54 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
     u32 iter_s;
     #endif
 
-    for (u32 i = 0; i < 256; i++)
+    for (u32 block = 0; block < 4096; block++)
     {
-      for (u32 j = 0; j < 16; j++)
-      {
-        u32 w[16];
+      const u32 iter0 = LOOP_POS + (block * 4);
 
-        w[ 0] = largeblock[ 0];
-        w[ 1] = largeblock[ 1];
-        w[ 2] = largeblock[ 2];
-        w[ 3] = largeblock[ 3];
-        w[ 4] = largeblock[ 4];
-        w[ 5] = largeblock[ 5];
-        w[ 6] = largeblock[ 6];
-        w[ 7] = largeblock[ 7];
-        w[ 8] = largeblock[ 8];
-        w[ 9] = largeblock[ 9];
-        w[10] = largeblock[10];
-        w[11] = largeblock[11];
-        w[12] = largeblock[12];
-        w[13] = largeblock[13];
-        w[14] = largeblock[14];
-        w[15] = largeblock[15];
+      u32 w[16];
 
-        #if !defined IS_NV
-        iter_s = hc_swap32_S (iter);
-        #endif
+      w[ 0] = largeblock[ 0];
+      w[ 1] = largeblock[ 1];
+      w[ 2] = largeblock[ 2];
+      w[ 3] = largeblock[ 3];
+      w[ 4] = largeblock[ 4];
+      w[ 5] = largeblock[ 5];
+      w[ 6] = largeblock[ 6];
+      w[ 7] = largeblock[ 7];
+      w[ 8] = largeblock[ 8];
+      w[ 9] = largeblock[ 9];
+      w[10] = largeblock[10];
+      w[11] = largeblock[11];
+      w[12] = largeblock[12];
+      w[13] = largeblock[13];
+      w[14] = largeblock[14];
+      w[15] = largeblock[15];
 
-        w[ 3] = RAR3_COUNTER_1 (iter, w[ 3]);
+      #if !defined IS_NV
+      iter_s = hc_swap32_S (iter0 + 0);
+      #endif
 
-        iter++;
+      w[ 3] = RAR3_COUNTER_1 (iter0 + 0, w[ 3]);
 
-        #if !defined IS_NV
-        iter_s = hc_swap32_S (iter);
-        #endif
+      #if !defined IS_NV
+      iter_s = hc_swap32_S (iter0 + 1);
+      #endif
 
-        w[ 7] = RAR3_COUNTER_1 (iter, w[ 7]);
+      w[ 7] = RAR3_COUNTER_1 (iter0 + 1, w[ 7]);
 
-        iter++;
+      #if !defined IS_NV
+      iter_s = hc_swap32_S (iter0 + 2);
+      #endif
 
-        #if !defined IS_NV
-        iter_s = hc_swap32_S (iter);
-        #endif
+      w[11] = RAR3_COUNTER_1 (iter0 + 2, w[11]);
 
-        w[11] = RAR3_COUNTER_1 (iter, w[11]);
+      #if !defined IS_NV
+      iter_s = hc_swap32_S (iter0 + 3);
+      #endif
 
-        iter++;
+      w[15] = RAR3_COUNTER_1 (iter0 + 3, w[15]);
 
-        #if !defined IS_NV
-        iter_s = hc_swap32_S (iter);
-        #endif
-
-        w[15] = RAR3_COUNTER_1 (iter, w[15]);
-
-        iter++;
-
-        sha1_transform (w + 0, w + 4, w + 8, w + 12, dgst);
-      }
+      sha1_transform (w + 0, w + 4, w + 8, w + 12, dgst);
     }
 
     tmps[gid].dgst[init_pos + 1][0] = dgst[0];
