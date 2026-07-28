@@ -9,6 +9,20 @@
 #include "inc_common.h"
 #include "inc_hash_scrypt.h"
 
+#if defined IS_CUDA
+#define SCRYPT_RESTRICT __restrict__
+#define SCRYPT_MATERIALIZE_PTR(p) asm volatile ("" : "+l" (p))
+#define SCRYPT_LOAD_LOOKUP(p) __ldg (p)
+#elif defined IS_OPENCL
+#define SCRYPT_RESTRICT restrict
+#define SCRYPT_MATERIALIZE_PTR(p)
+#define SCRYPT_LOAD_LOOKUP(p) (*(p))
+#else
+#define SCRYPT_RESTRICT
+#define SCRYPT_MATERIALIZE_PTR(p)
+#define SCRYPT_LOAD_LOOKUP(p) (*(p))
+#endif
+
 DECLSPEC hc_uint4_t xor_uint4 (const hc_uint4_t a, const hc_uint4_t b)
 {
   hc_uint4_t r;
@@ -54,6 +68,10 @@ DECLSPEC void salsa_r (PRIVATE_AS u32 *TI)
     for (int j = 0; j < SALSA_CNT4; j++) TT[j] ^= TI[i + j];
 
     for (int j = 0; j < SALSA_CNT4; j++) TI[i + j] = TT[j];
+
+    #if defined IS_CUDA
+    #pragma unroll 1
+    #endif
 
     for (int r = 0; r < 4; r++)
     {
@@ -170,6 +188,8 @@ DECLSPEC void scrypt_smix_init (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, GLOBAL_AS v
 
   GLOBAL_AS hc_uint4_t *Vx = V + (xd4 * lsz * ySIZE * zSIZE) + (lid * ySIZE * zSIZE);
 
+  SCRYPT_MATERIALIZE_PTR (Vx);
+
   for (u32 i = 0; i < STATE_CNT4; i++) X[i] = P[i];
 
   for (u32 y = 0; y < ySIZE; y++)
@@ -191,7 +211,7 @@ DECLSPEC void scrypt_smix_init (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, GLOBAL_AS v
   for (u32 i = 0; i < STATE_CNT4; i++) P[i] = X[i];
 }
 
-DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, PRIVATE_AS u32 *T, GLOBAL_AS void *V0, GLOBAL_AS void *V1, GLOBAL_AS void *V2, GLOBAL_AS void *V3, const u32 gid, const u32 lid, const u32 lsz, const u32 bid)
+DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 * SCRYPT_RESTRICT X, PRIVATE_AS u32 * SCRYPT_RESTRICT T, GLOBAL_AS const void *V0, GLOBAL_AS const void *V1, GLOBAL_AS const void *V2, GLOBAL_AS const void *V3, const u32 gid, const u32 lid, const u32 lsz, const u32 bid)
 {
   const u32 ySIZE = SCRYPT_N >> SCRYPT_TMTO;
   const u32 zSIZE = STATE_CNT44;
@@ -202,17 +222,19 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, PRIVATE_AS 
   PRIVATE_AS hc_uint4_t *X4 = (PRIVATE_AS hc_uint4_t *) X;
   PRIVATE_AS hc_uint4_t *T4 = (PRIVATE_AS hc_uint4_t *) T;
 
-  GLOBAL_AS hc_uint4_t *V;
+  GLOBAL_AS const hc_uint4_t *V;
 
   switch (xm4)
   {
-    case 0: V = (GLOBAL_AS hc_uint4_t *) V0; break;
-    case 1: V = (GLOBAL_AS hc_uint4_t *) V1; break;
-    case 2: V = (GLOBAL_AS hc_uint4_t *) V2; break;
-    case 3: V = (GLOBAL_AS hc_uint4_t *) V3; break;
+    case 0: V = (GLOBAL_AS const hc_uint4_t *) V0; break;
+    case 1: V = (GLOBAL_AS const hc_uint4_t *) V1; break;
+    case 2: V = (GLOBAL_AS const hc_uint4_t *) V2; break;
+    case 3: V = (GLOBAL_AS const hc_uint4_t *) V3; break;
   }
 
-  GLOBAL_AS hc_uint4_t *Vx = V + (xd4 * lsz * ySIZE * zSIZE) + (lid * ySIZE * zSIZE);
+  GLOBAL_AS const hc_uint4_t *Vx = V + (xd4 * lsz * ySIZE * zSIZE) + (lid * ySIZE * zSIZE);
+
+  SCRYPT_MATERIALIZE_PTR (Vx);
 
   for (u32 i = 0; i < STATE_CNT4; i++) X[i] = P[i];
 
@@ -228,10 +250,45 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, PRIVATE_AS 
 
     const u32 km = k - (y << SCRYPT_TMTO);
 
-    GLOBAL_AS hc_uint4_t *Vxx = Vx + (y * zSIZE);
+    GLOBAL_AS const hc_uint4_t *Vxx = Vx + (y * zSIZE);
 
-    for (u32 z = 0; z < zSIZE; z++) T4[z] = *Vxx++;
+    for (u32 z = 0; z < zSIZE; z++) T4[z] = SCRYPT_LOAD_LOOKUP (Vxx++);
 
+    #if SCRYPT_TMTO == 1
+    if (km)
+    {
+      salsa_r (T);
+
+      #if SCRYPT_R > 1
+      scrypt_shuffle (T);
+      #endif
+    }
+    #elif SCRYPT_TMTO == 2
+    if (km & 2)
+    {
+      #if defined IS_CUDA
+      #pragma unroll 1
+      #endif
+
+      for (u32 replay = 0; replay < 2; replay++)
+      {
+        salsa_r (T);
+
+        #if SCRYPT_R > 1
+        scrypt_shuffle (T);
+        #endif
+      }
+    }
+
+    if (km & 1)
+    {
+      salsa_r (T);
+
+      #if SCRYPT_R > 1
+      scrypt_shuffle (T);
+      #endif
+    }
+    #else
     for (u32 i = 0; i < km; i++)
     {
       salsa_r (T);
@@ -240,6 +297,7 @@ DECLSPEC void scrypt_smix_loop (GLOBAL_AS u32 *P, PRIVATE_AS u32 *X, PRIVATE_AS 
       scrypt_shuffle (T);
       #endif
     }
+    #endif
 
     for (u32 z = 0; z < zSIZE; z++) X4[z] = xor_uint4 (X4[z], T4[z]);
 
@@ -521,3 +579,6 @@ DECLSPEC void scrypt_pbkdf2_ggg (GLOBAL_AS const u32 *pw_buf, const int pw_len, 
   scrypt_pbkdf2_body_pg (&sha256_hmac_ctx, out_buf, out_len);
 }
 
+#undef SCRYPT_RESTRICT
+#undef SCRYPT_MATERIALIZE_PTR
+#undef SCRYPT_LOAD_LOOKUP
