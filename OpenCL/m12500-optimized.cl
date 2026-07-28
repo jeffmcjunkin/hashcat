@@ -140,6 +140,11 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
     if (prefix_pos == p3) prefix_pos = 0;
   }
 
+  // p3 is in [11, 51].  Using 16 - p3 for the short-record case is
+  // equivalent to 16 % p3 and keeps j16 canonical with one subtraction.
+
+  const u32 j_step = (p3 <= 16) ? 16 - p3 : 16;
+
   const u32 init_pos = LOOP_POS / (ROUNDS / 16);
 
   u32 dgst[5];
@@ -348,7 +353,7 @@ KERNEL_FQ KERNEL_FA void m12500_loop (KERN_ATTR_TMPS (rar3_tmp_t))
 
       k &= 63;
 
-      j16 += 16;
+      j16 += j_step;
 
       if (j16 >= p3) j16 -= p3;
     }
