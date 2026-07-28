@@ -112,7 +112,7 @@ DECLSPEC void hmac_md5_run (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u
   md5_transform (w0, w1, w2, w3, digest);
 }
 
-DECLSPEC void rc4_init_128_virtual4 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u64 lid)
+DECLSPEC void rc4_init_128_virtual4 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u32 lid)
 {
   u32 v = 0x07060504;
   u32 a = 0x04040404;
@@ -247,7 +247,7 @@ DECLSPEC void rc4_init_128_virtual4 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key,
   }
 }
 
-DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 edata2_3, const u64 lid)
+DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 edata2_3, const u32 lid)
 {
   u8 a = 0;
   u8 b = 0;
@@ -302,7 +302,7 @@ DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 e
   return 1;
 }
 
-DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS const u32 *edata2, const u32 edata2_len, PRIVATE_AS const u32 *K2, PRIVATE_AS const u32 *checksum, const u64 lid)
+DECLSPEC int decrypt_and_check (LOCAL_AS u32 *S, PRIVATE_AS u32 *data, GLOBAL_AS const u32 *edata2, const u32 edata2_len, PRIVATE_AS const u32 *K2, PRIVATE_AS const u32 *checksum, const u32 lid)
 {
   rc4_init_128 (S, data, lid);
 
@@ -687,7 +687,7 @@ KERNEL_FQ KERNEL_FA void m18200_m04 (KERN_ATTR_ESALT (krb5asrep_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
@@ -738,7 +738,7 @@ KERNEL_FQ KERNEL_FA void m18200_m08 (KERN_ATTR_ESALT (krb5asrep_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
@@ -793,7 +793,7 @@ KERNEL_FQ KERNEL_FA void m18200_s04 (KERN_ATTR_ESALT (krb5asrep_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
@@ -844,7 +844,7 @@ KERNEL_FQ KERNEL_FA void m18200_s08 (KERN_ATTR_ESALT (krb5asrep_t))
    * base
    */
 
-  const u64 lid = get_local_id (0);
+  const u32 lid = get_local_id (0);
   const u64 gid = get_global_id (0);
   const u64 lsz = get_local_size (0);
 
