@@ -112,6 +112,17 @@ DECLSPEC void hmac_md5_run (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u
   md5_transform (w0, w1, w2, w3, digest);
 }
 
+#define M18200_RC4_KSA_PREFETCH_STEP(d)       \
+{                                             \
+  const u8 s_next = GET_KEY8 (S, idx + 1, lid); \
+  j += s_i + (d);                             \
+  const u8 s_j = GET_KEY8 (S, j, lid);        \
+  SET_KEY8 (S, idx, s_j, lid);                \
+  SET_KEY8 (S, j, s_i, lid);                  \
+  idx++;                                      \
+  s_i = (j == idx) ? s_i : s_next;            \
+}
+
 DECLSPEC void rc4_init_128_virtual4 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key, const u32 lid)
 {
   u32 v = 0x07060504;
@@ -191,27 +202,28 @@ DECLSPEC void rc4_init_128_virtual4 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key,
   u8 j = j3;
 
   u8 idx = 4;
+  u8 s_i = GET_KEY8 (S, idx, lid);
 
   v = key[1];
 
-  j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-  j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-  j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-  j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  M18200_RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+  M18200_RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+  M18200_RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+  M18200_RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
 
   v = key[2];
 
-  j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-  j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-  j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-  j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  M18200_RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+  M18200_RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+  M18200_RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+  M18200_RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
 
   v = key[3];
 
-  j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-  j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-  j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-  j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+  M18200_RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+  M18200_RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+  M18200_RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+  M18200_RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
 
   for (u32 i = 1; i < 16; i++)
   {
@@ -219,33 +231,35 @@ DECLSPEC void rc4_init_128_virtual4 (LOCAL_AS u32 *S, PRIVATE_AS const u32 *key,
 
     v = key[0];
 
-    j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    M18200_RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
 
     v = key[1];
 
-    j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    M18200_RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
 
     v = key[2];
 
-    j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    M18200_RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
 
     v = key[3];
 
-    j += GET_KEY8 (S, idx, lid) + v8a_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8b_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8c_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
-    j += GET_KEY8 (S, idx, lid) + v8d_from_v32_S (v); rc4_swap (S, idx, j, lid); idx++;
+    M18200_RC4_KSA_PREFETCH_STEP (v8a_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8b_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8c_from_v32_S (v));
+    M18200_RC4_KSA_PREFETCH_STEP (v8d_from_v32_S (v));
   }
 }
+
+#undef M18200_RC4_KSA_PREFETCH_STEP
 
 DECLSPEC int asrep_early_check (LOCAL_AS u32 *S, const u32 edata2_2, const u32 edata2_3, const u32 lid)
 {
