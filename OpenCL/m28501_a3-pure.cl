@@ -175,6 +175,11 @@ KERNEL_FQ KERNEL_FA void m28501_mxx (KERN_ATTR_VECTOR ())
 
   m28501_decode_b58_tail (b58_tail, w);
 
+  // 58^48 contains 48 factors of two, so the low 48 bits are independent of
+  // the four candidate prefix digits.  The compressed-key marker is the low
+  // byte of raw limb 8 and can reject this gid before entering the IL loop.
+  if ((b58_tail[8] & 0xff) != 1) return;
+
   /**
    * loop
    */
@@ -348,6 +353,8 @@ KERNEL_FQ KERNEL_FA void m28501_sxx (KERN_ATTR_VECTOR ())
   u32 b58_tail[10];
 
   m28501_decode_b58_tail (b58_tail, w);
+
+  if ((b58_tail[8] & 0xff) != 1) return;
 
   /**
    * loop
