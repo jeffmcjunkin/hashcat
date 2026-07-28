@@ -17,6 +17,13 @@
 #include M2S(INCLUDE_PATH/inc_cipher_rc4.cl)
 #endif
 
+// A 32-thread block owns an 8 KiB RC4 S-box. Twelve blocks fill the practical
+// shared-memory residency limit while giving ptxas a mild latency-hiding target.
+#if defined IS_CUDA || defined IS_HIP
+#undef  KERNEL_FA
+#define KERNEL_FA __launch_bounds__ (32, 12)
+#endif
+
 typedef struct krb5tgs
 {
   u32 account_info[512];
