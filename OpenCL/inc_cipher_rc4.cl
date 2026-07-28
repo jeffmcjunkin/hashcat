@@ -490,7 +490,7 @@ DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const
 {
   u8 a = i;
   u8 b = j;
-  u8 sa;
+  u8 sa = GET_KEY8 (S, i + 1, lid);
   u8 sb;
 
   #ifdef _unroll
@@ -499,12 +499,15 @@ DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const
   for (int k = 0; k < 8; k++)
   {
     a += 1;
-    sa = GET_KEY8 (S, a, lid);
+    const u8 next = a + 1;
+    const u8 s_next = GET_KEY8 (S, next, lid);
     b += sa;
     sb = GET_KEY8 (S, b, lid);
 
     SET_KEY8 (S, a, sb, lid);
     SET_KEY8 (S, b, sa, lid);
+
+    sa = (b == next) ? sa : s_next;
   }
 
   u32 xor4 = 0;
@@ -514,7 +517,6 @@ DECLSPEC RC4_NOINLINE int rc4_next_12_global_krb5_staged (LOCAL_AS u32 *S, const
   u8 idx;
 
   a += 1;
-  sa = GET_KEY8 (S, a, lid);
   b += sa;
   sb = GET_KEY8 (S, b, lid);
 
