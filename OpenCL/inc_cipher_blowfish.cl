@@ -310,6 +310,24 @@ CONSTANT_VK u8 c_bcrypt_base64_alphabet[64] =
 
 // access pattern: minimize bank ID based on thread ID but thread ID is not saved from computation
 
+#ifdef BCRYPT_KEY32_PREBIASED_LID
+
+#define KEY32(key) ((key) * FIXED_LOCAL_SIZE)
+
+DECLSPEC u32 GET_KEY32 (LOCAL_AS u32 *S, const u64 key)
+{
+  return S[KEY32 (key)];
+}
+
+DECLSPEC void SET_KEY32 (LOCAL_AS u32 *S, const u64 key, const u32 val)
+{
+  S[KEY32 (key)] = val;
+}
+
+#undef KEY32
+
+#else
+
 #define KEY32(lid,key) (((key) * FIXED_LOCAL_SIZE) + (lid))
 
 DECLSPEC u32 GET_KEY32 (LOCAL_AS u32 *S, const u64 key)
@@ -327,6 +345,8 @@ DECLSPEC void SET_KEY32 (LOCAL_AS u32 *S, const u64 key, const u32 val)
 }
 
 #undef KEY32
+
+#endif
 
 #else
 
@@ -624,6 +644,129 @@ DECLSPEC void blowfish_encrypt (PRIVATE_AS u32 *P, LOCAL_AS u32 *S0, LOCAL_AS u3
     P[i * 2 + 1] = R0;
   }
 
+  #ifdef BCRYPT_UNROLL_SBOX_EXPANSION
+  #if defined BCRYPT_WALK_SBOX_STORES && defined BCRYPT_AVOID_BANK_CONFLICTS && defined BCRYPT_KEY32_PREBIASED_LID
+  LOCAL_AS u32 *S_store = S0;
+
+  for (u32 i = 0; i < 64; i++)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 0] = L0;
+    S_store[FIXED_LOCAL_SIZE * 1] = R0;
+
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 2] = L0;
+    S_store[FIXED_LOCAL_SIZE * 3] = R0;
+
+    S_store += FIXED_LOCAL_SIZE * 4;
+  }
+
+  S_store = S1;
+
+  for (u32 i = 0; i < 64; i++)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 0] = L0;
+    S_store[FIXED_LOCAL_SIZE * 1] = R0;
+
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 2] = L0;
+    S_store[FIXED_LOCAL_SIZE * 3] = R0;
+
+    S_store += FIXED_LOCAL_SIZE * 4;
+  }
+
+  S_store = S2;
+
+  for (u32 i = 0; i < 64; i++)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 0] = L0;
+    S_store[FIXED_LOCAL_SIZE * 1] = R0;
+
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 2] = L0;
+    S_store[FIXED_LOCAL_SIZE * 3] = R0;
+
+    S_store += FIXED_LOCAL_SIZE * 4;
+  }
+
+  S_store = S3;
+
+  for (u32 i = 0; i < 64; i++)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 0] = L0;
+    S_store[FIXED_LOCAL_SIZE * 1] = R0;
+
+    BF_ENCRYPT (L0, R0);
+
+    S_store[FIXED_LOCAL_SIZE * 2] = L0;
+    S_store[FIXED_LOCAL_SIZE * 3] = R0;
+
+    S_store += FIXED_LOCAL_SIZE * 4;
+  }
+  #else
+  for (u32 i = 0; i < 256; i += 4)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S0, i + 0, L0);
+    SET_KEY32 (S0, i + 1, R0);
+
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S0, i + 2, L0);
+    SET_KEY32 (S0, i + 3, R0);
+  }
+
+  for (u32 i = 0; i < 256; i += 4)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S1, i + 0, L0);
+    SET_KEY32 (S1, i + 1, R0);
+
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S1, i + 2, L0);
+    SET_KEY32 (S1, i + 3, R0);
+  }
+
+  for (u32 i = 0; i < 256; i += 4)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S2, i + 0, L0);
+    SET_KEY32 (S2, i + 1, R0);
+
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S2, i + 2, L0);
+    SET_KEY32 (S2, i + 3, R0);
+  }
+
+  for (u32 i = 0; i < 256; i += 4)
+  {
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S3, i + 0, L0);
+    SET_KEY32 (S3, i + 1, R0);
+
+    BF_ENCRYPT (L0, R0);
+
+    SET_KEY32 (S3, i + 2, L0);
+    SET_KEY32 (S3, i + 3, R0);
+  }
+  #endif
+  #else
   for (u32 i = 0; i < 256; i += 2)
   {
     BF_ENCRYPT (L0, R0);
@@ -655,4 +798,5 @@ DECLSPEC void blowfish_encrypt (PRIVATE_AS u32 *P, LOCAL_AS u32 *S0, LOCAL_AS u3
     SET_KEY32 (S3, i + 0, L0);
     SET_KEY32 (S3, i + 1, R0);
   }
+  #endif
 }
